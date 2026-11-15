@@ -116,6 +116,8 @@
   body.style-chrome .omni-star.on { color: var(--accent); }
   .profilebtn { display: none; }
   body.style-chrome .profilebtn { display: grid; place-items: center; }
+  .extbtn { display: none; }
+  body.style-chrome .extbtn { display: grid; place-items: center; }
   .profilebtn .avatar { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
                         background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
                         font-size: 12px; font-weight: 700; }
@@ -637,6 +639,9 @@
     </div>
     <button class="btn" id="aibtn" title="ORVYN AI (Alt+A)">
       <svg viewBox="0 0 24 24"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/></svg>
+    </button>
+    <button class="btn extbtn" id="extbtn" title="Расширения и трипы">
+      <svg viewBox="0 0 24 24"><path d="M9 3h3a2 2 0 1 1 4 0h3v5a2 2 0 1 0 0 4v4h-5a2 2 0 1 1-4 0H5v-5a2 2 0 1 0 0-4V3z"/></svg>
     </button>
     <button class="btn profilebtn" id="profilebtn" title="Профиль ORVYN">
       <span class="avatar">O</span>
@@ -1614,6 +1619,10 @@
       h += '<div class="sect">ORVYN AI</div>';
       h += '<div class="item" data-t="aiOn"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">ORVYN AI включён</div><div class="l2">бесплатный облачный помощник без ключей</div></div>' + switchRow(st.aiOn) + '</div>';
       h += '<div class="item" data-t="aiSave" data-adv="1"><span class="ic">' + I.clock + '</span><div class="body"><div class="l1">Сохранять историю AI</div><div class="l2">в store.json на этом ПК</div></div>' + switchRow(st.aiSave) + '</div>';
+      h += '<div class="sform"><div class="fline"><input data-set="aiEndpoint" data-k="aiEndpoint" spellcheck="false" placeholder="https://api.openai.com/v1 (пусто — бесплатный AI)" value="' + esc(st.aiEndpoint || "") + '"></div>' +
+           '<div class="fline"><input data-set="aiModelCustom" data-k="aiModelCustom" spellcheck="false" placeholder="Модель: gpt-4o-mini, llama-3.3-70b…" value="' + esc(st.aiModelCustom || "") + '"></div>' +
+           '<div class="fline"><input data-set="aiKey" data-k="aiKey" type="password" spellcheck="false" placeholder="' + (st.aiKeySet ? "Ключ сохранён — введи новый, чтобы заменить" : "API-ключ провайдера") + '" value=""></div>' +
+           '<div class="note">Свой OpenAI-совместимый провайдер: полный адрес API и модель. Ключ хранится локально в store.json открытым текстом — не вводи чужой ключ на общем ПК. Пустые поля = бесплатный ORVYN AI без ключей.</div></div>';
       h += '</div>';
 
       h += '<div class="setsec" data-sec="sites">';
@@ -2231,6 +2240,7 @@
   $("star").onclick = () => ipc({ cmd: "bookmark" });
   if ($("star2")) $("star2").onclick = () => ipc({ cmd: "bookmark" });
   if ($("profilebtn")) $("profilebtn").onclick = () => ipc({ cmd: "panel", name: "settings" });
+  if ($("extbtn")) $("extbtn").onclick = () => ipc({ cmd: "panel", name: "extensions" });
   $("downloads").onclick = () => ipc({ cmd: "panel", name: "downloads" });
   $("musicbtn").onclick = () => ipc({ cmd: "panel", name: "music" });
   $("menu").onclick = () => ipc({ cmd: "panel", name: "menu" });

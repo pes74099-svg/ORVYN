@@ -2264,9 +2264,20 @@ impl App {
         self.layout();
         self.status = "ORVYN AI думает…".to_string();
         let messages = self.ai_request_messages();
+        let provider = ai::Provider {
+            endpoint: self.store.settings.ai_endpoint.trim().to_string(),
+            key: self.store.settings.ai_key.trim().to_string(),
+            model: self.store.settings.ai_model_custom.trim().to_string(),
+        };
+        if !provider.endpoint.is_empty() && provider.model.is_empty() {
+            self.status = "Для своего провайдера укажи модель в настройках AI.".to_string();
+            self.ai_busy = false;
+            self.refresh();
+            return;
+        }
         let p = self.proxy.clone();
         std::thread::spawn(move || {
-            let res = ai::ask(&messages);
+            let res = ai::ask_with(&provider, &messages);
             let _ = p.send_event(UserEvent::AiReply(res));
         });
         text.clear();
@@ -3505,6 +3516,16 @@ impl App {
                     _ => "segoe",
                 }
                 .to_string();
+            }
+            "aiEndpoint" => {
+                self.store.settings.ai_endpoint = v.as_str().unwrap_or("").trim().to_string();
+            }
+            "aiKey" => {
+                self.store.settings.ai_key = v.as_str().unwrap_or("").trim().to_string();
+            }
+            "aiModelCustom" => {
+                self.store.settings.ai_model_custom =
+                    v.as_str().unwrap_or("").trim().to_string();
             }
             "uiStyle" => {
                 self.store.settings.ui_style = if v.as_str() == Some("orvyn") {

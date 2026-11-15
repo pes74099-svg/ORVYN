@@ -132,6 +132,12 @@ pub struct Settings {
     pub ai_on: bool,
     /// Сохранять историю диалога в store.json.
     pub ai_save: bool,
+    /// Свой OpenAI-совместимый endpoint. Пусто — бесплатный Pollinations.
+    pub ai_endpoint: String,
+    /// Ключ внешнего провайдера. Хранится локально, в открытом виде.
+    pub ai_key: String,
+    /// Модель внешнего провайдера.
+    pub ai_model_custom: String,
     /// Жесты правой кнопкой мыши: назад/вперёд и прокрутка.
     pub mouse_gestures: bool,
     /// Стиль интерфейса: "chrome" (по умолчанию) или "orvyn".
@@ -198,6 +204,9 @@ impl Default for Settings {
             translate_lang: "ru".to_string(),
             ai_on: true,
             ai_save: true,
+            ai_endpoint: String::new(),
+            ai_key: String::new(),
+            ai_model_custom: String::new(),
             mouse_gestures: true,
             ui_style: "chrome".to_string(),
             bookmarks_bar: false,
@@ -585,6 +594,9 @@ pub fn reset_section(s: &mut Settings, section: &str) -> bool {
         "ai" => {
             s.ai_on = d.ai_on;
             s.ai_save = d.ai_save;
+            s.ai_endpoint = d.ai_endpoint;
+            s.ai_key = d.ai_key;
+            s.ai_model_custom = d.ai_model_custom;
         }
         "sites" => {
             s.proxy_on = d.proxy_on;

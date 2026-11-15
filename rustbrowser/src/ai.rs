@@ -27,7 +27,23 @@ pub struct Reply {
     pub model: String,
 }
 
-pub fn ask(messages: &[Message]) -> Result<Reply, String> {
+/// Настройки внешнего OpenAI-совместимого провайдера.
+#[derive(Clone, Debug, Default)]
+pub struct Provider {
+    pub endpoint: String,
+    pub key: String,
+    pub model: String,
+}
+
+pub fn ask_with(p: &Provider, messages: &[Message]) -> Result<Reply, String> {
+    if p.endpoint.trim().is_empty() {
+        ask_free(messages)
+    } else {
+        ask_openai(p, messages)
+    }
+}
+
+fn ask_free(messages: &[Message]) -> Result<Reply, String> {
     let prompt = build_prompt(messages);
     if prompt.trim().is_empty() {
         return Err("Пустой запрос к AI.".to_string());
@@ -39,7 +55,7 @@ pub fn ask(messages: &[Message]) -> Result<Reply, String> {
     }
     let response = ureq::get(&url)
         .timeout(Duration::from_secs(45))
-        .set("User-Agent", "ORVYN/2.2")
+        .set("User-Agent", "ORVYN/3.0")
         .call();
     match response {
         Ok(r) => {
@@ -60,6 +76,70 @@ pub fn ask(messages: &[Message]) -> Result<Reply, String> {
             "нет связи с бесплатным AI: {e}. Проверь интернет и попробуй ещё раз."
         )),
     }
+}
+
+fn ask_openai(p: &Provider, messages: &[Message]) -> Result<Reply, String> {
+    let model = p.model.trim();
+    if model.is_empty() {
+        return Err("Укажи модель провайдера, например gpt-4o-mini.".to_string());
+    }
+    let base = p.endpoint.trim().trim_end_matches('/');
+    let url = if base.ends_with("/chat/completions") {
+        base.to_string()
+    } else {
+        format!("{base}/chat/completions")
+    };
+    let list: Vec<serde_json::Value> = messages
+        .iter()
+        .map(|m| serde_json::json!({ "role": m.role, "content": m.content }))
+        .collect();
+    let body = serde_json::json!({
+        "model": model,
+        "messages": list,
+        "temperature": 0.7
+    })
+    .to_string();
+    let mut req = ureq::post(&url)
+        .timeout(Duration::from_secs(90))
+        .set("Content-Type", "application/json")
+        .set("User-Agent", "ORVYN/3.0");
+    let key = p.key.trim();
+    if !key.is_empty() {
+        req = req.set("Authorization", &format!("Bearer {key}"));
+    }
+    match req.send_string(&body) {
+        Ok(r) => {
+            let raw = r
+                .into_string()
+                .map_err(|e| format!("Не смог прочитать ответ провайдера: {e}"))?;
+            parse_openai(&raw, model)
+        }
+        Err(ureq::Error::Status(code, r)) => {
+            let raw = r.into_string().unwrap_or_default();
+            let short: String = raw.chars().take(220).collect();
+            Err(format!("Провайдер ответил кодом {code}: {short}"))
+        }
+        Err(e) => Err(format!("Нет связи с провайдером: {e}")),
+    }
+}
+
+fn parse_openai(raw: &str, model: &str) -> Result<Reply, String> {
+    let v: serde_json::Value =
+        serde_json::from_str(raw).map_err(|e| format!("Провайдер вернул не JSON: {e}"))?;
+    if let Some(msg) = v["error"]["message"].as_str() {
+        return Err(format!("Провайдер: {msg}"));
+    }
+    let text = v["choices"][0]["message"]["content"]
+        .as_str()
+        .ok_or_else(|| "В ответе нет choices[0].message.content".to_string())?;
+    let text = text.trim();
+    if text.is_empty() {
+        return Err("Провайдер вернул пустой ответ.".to_string());
+    }
+    Ok(Reply {
+        text: text.chars().take(24_000).collect(),
+        model: v["model"].as_str().unwrap_or(model).to_string(),
+    })
 }
 
 fn encoded_len(s: &str) -> usize {
@@ -217,5 +297,21 @@ mod tests {
         assert!(parse_text("  ").is_err());
         assert!(parse_text("<html>oops</html>").is_err());
         assert!(encode("привет тест").starts_with("%D0%BF"));
+    }
+
+    #[test]
+    fn openai_reply_is_parsed() {
+        let raw = r#"{"model":"gpt-test","choices":[{"message":{"role":"assistant","content":"Привет"}}]}"#;
+        let r = parse_openai(raw, "fallback").unwrap();
+        assert_eq!(r.text, "Привет");
+        assert_eq!(r.model, "gpt-test");
+    }
+
+    #[test]
+    fn openai_errors_are_reported() {
+        let raw = r#"{"error":{"message":"bad key"}}"#;
+        assert!(parse_openai(raw, "m").unwrap_err().contains("bad key"));
+        assert!(parse_openai("{}", "m").is_err());
+        assert!(parse_openai("не json", "m").is_err());
     }
 }
