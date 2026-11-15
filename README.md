@@ -1,5 +1,7 @@
 # ORVYN
 
+![CI](https://github.com/pes74099-svg/ORVYN/actions/workflows/ci.yml/badge.svg)
+
 Лёгкий браузер для Windows на Rust + WebView2. Без Electron и лишних фоновых процессов.
 
 - Движок: Microsoft Edge WebView2 (Chromium).
