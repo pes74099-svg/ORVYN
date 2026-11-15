@@ -48,6 +48,7 @@ const CHROME_H: f64 = 92.0;
 const TABBAR_H: f64 = 38.0;
 const TOOLBAR_H: f64 = 54.0;
 const TOOLBAR_ROW_H: f64 = 88.0;
+const BOOKMARKS_H: f64 = 32.0;
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 /// Процентное кодирование для адреса страницы в Google Translate.
@@ -728,7 +729,17 @@ impl App {
                 TOOLBAR_H
             };
         }
+        if self.bookmarks_bar_visible() {
+            h += BOOKMARKS_H;
+        }
         h
+    }
+
+    /// Полоса закладок показывается только в Chrome-стиле и при наличии закладок.
+    fn bookmarks_bar_visible(&self) -> bool {
+        self.store.settings.ui_style != "orvyn"
+            && !self.store.settings.toolbar_hidden
+            && !self.store.bookmarks.is_empty()
     }
 
     fn layout(&self) {
@@ -3426,6 +3437,7 @@ impl App {
                 } else {
                     "chrome".to_string()
                 };
+                self.layout();
             }
             "uiOpacity" => {
                 let n = v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok())).unwrap_or(100);
