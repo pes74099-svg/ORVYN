@@ -35,7 +35,7 @@ static LOADER_PAYLOAD: &[u8] = include_bytes!("../WebView2Loader.dll");
 const LOADER_NAME: &str = "WebView2Loader.dll";
 
 const APP_NAME: &str = "ORVYN";
-const VERSION: &str = "3.0.0";
+const VERSION: &str = "3.0.1";
 const UNINSTALL_KEY: &str = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\ORVYN";
 
 /// Прошлые имена: чистим при установке, чтобы не осталось двух копий.
