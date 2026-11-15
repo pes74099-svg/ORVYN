@@ -170,6 +170,7 @@ impl App {
                 let _ = self.chrome.evaluate_script("window.focusBar && window.focusBar();");
             }
             "ctrl+r" | "f5" => self.reload_active(),
+            "f11" => self.toggle_fullscreen(),
             "ctrl+d" => self.toggle_bookmark(),
             "ctrl+tab" => self.cycle(1),
             "ctrl+shift+tab" => self.cycle(-1),

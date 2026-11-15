@@ -445,7 +445,7 @@ pub fn inject_script(protect: bool, gestures: bool) -> String {
                  "ctrl+shift+i","alt+arrowleft","alt+arrowright","alt+home","f5",
                  "ctrl+equal","ctrl+-","ctrl+0","ctrl+shift+t","ctrl+shift+n",
                  "ctrl+shift+d","ctrl+f","ctrl+m","ctrl+shift+a","ctrl+shift+b",
-                 "ctrl+shift+l","alt+a","ctrl++","ctrl+="];
+                 "ctrl+shift+l","alt+a","ctrl++","ctrl+=","f11"];
     if (known.indexOf(combo) >= 0) {{
       e.preventDefault();
       e.stopPropagation();

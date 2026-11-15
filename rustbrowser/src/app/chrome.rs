@@ -51,6 +51,7 @@ impl App {
                 self.window.set_minimized(true);
             }
             "windowMax" => self.toggle_maximize(),
+            "windowFull" => self.toggle_fullscreen(),
             "windowClose" => self.request_close(),
             "windowDrag" => {
                 let _ = self.window.drag_window();

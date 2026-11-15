@@ -24,7 +24,7 @@ use serde_json::{json, Value};
 use tao::dpi::{LogicalPosition, LogicalSize};
 use tao::event::{Event, StartCause, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
-use tao::window::{Icon, Window, WindowBuilder};
+use tao::window::{Fullscreen, Icon, Window, WindowBuilder};
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     ICoreWebView2, ICoreWebView2Environment, ICoreWebView2Environment8, ICoreWebView2Profile2,
     ICoreWebView2Profile4, ICoreWebView2_13, ICoreWebView2_2, ICoreWebView2_8,
@@ -351,6 +351,8 @@ struct DownloadItem {
 struct App {
     window: Window,
     maximized: bool,
+    /// Окно развёрнуто на весь экран (F11).
+    fullscreen: bool,
     chrome: WebView,
     web_context: WebContext,
     music_context: Option<(String, WebContext)>,
@@ -677,6 +679,7 @@ impl App {
         Ok(Self {
             window,
             maximized: false,
+            fullscreen: false,
             chrome,
             web_context,
             music_context: None,
@@ -757,6 +760,10 @@ impl App {
     fn chrome_height(&self) -> f64 {
         if self.panel.is_some() || self.suggesting {
             return self.logical_size().1;
+        }
+        if self.fullscreen {
+            // Полный экран как в Chrome: остаётся только страница.
+            return 0.0;
         }
         let mut h = TABBAR_H;
         if !self.store.settings.toolbar_hidden {
@@ -1259,6 +1266,24 @@ impl App {
         let maximize = !self.window.is_maximized();
         self.maximized = maximize;
         self.window.set_maximized(maximize);
+        self.refresh();
+    }
+
+    /// Полноэкранный режим: F11 или меню «⋮».
+    fn toggle_fullscreen(&mut self) {
+        self.fullscreen = !self.fullscreen;
+        let mode = if self.fullscreen {
+            Some(Fullscreen::Borderless(self.window.current_monitor()))
+        } else {
+            None
+        };
+        self.window.set_fullscreen(mode);
+        if self.fullscreen {
+            self.status = "Полный экран · F11 — выйти".to_string();
+        } else {
+            self.status = "Обычный режим окна".to_string();
+        }
+        self.layout();
         self.refresh();
     }
 

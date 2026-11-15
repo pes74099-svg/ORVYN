@@ -268,6 +268,7 @@ impl App {
             "history": history,
             "panel": self.panel,
             "maximized": self.maximized,
+            "fullscreen": self.fullscreen,
             "zoom": cur.map(|t| t.zoom).unwrap_or(1.0),
             "theme": self.store.settings.theme,
             "snow": self.store.settings.snow,
