@@ -1,6 +1,6 @@
 use crate::{
-    adblock, ai, backup, capture, cleaner, downloads, import, monitor, music, search, security,
-    storage, sync, update, vault,
+    adblock, ai, backup, capture, cleaner, downloads, import, instance, monitor, music, search,
+    security, storage, sync, update, vault,
 };
 use zeroize::Zeroize;
 
@@ -3931,7 +3931,7 @@ pub fn run() {
     let proxy = event_loop.create_proxy();
 
     let window = WindowBuilder::new()
-        .with_title("ORVYN 2.2")
+        .with_title(instance::WINDOW_TITLE)
         .with_decorations(false)
         .with_window_icon(app_icon())
         .with_inner_size(LogicalSize::new(1360.0, 860.0))
