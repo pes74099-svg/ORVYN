@@ -134,6 +134,8 @@ pub struct Settings {
     pub ai_save: bool,
     /// Жесты правой кнопкой мыши: назад/вперёд и прокрутка.
     pub mouse_gestures: bool,
+    /// Стиль интерфейса: "chrome" (по умолчанию) или "orvyn".
+    pub ui_style: String,
 }
 
 impl Default for Settings {
@@ -193,6 +195,7 @@ impl Default for Settings {
             ai_on: true,
             ai_save: true,
             mouse_gestures: true,
+            ui_style: "chrome".to_string(),
         }
     }
 }
@@ -224,6 +227,9 @@ impl Settings {
             "segoe" | "system" | "arial" | "georgia" | "consolas"
         ) {
             self.ui_font = "segoe".to_string();
+        }
+        if self.ui_style != "orvyn" {
+            self.ui_style = "chrome".to_string();
         }
         self.ui_opacity = self.ui_opacity.clamp(60, 100);
         self.ui_blur = self.ui_blur.min(24);
@@ -530,6 +536,7 @@ pub fn reset_section(s: &mut Settings, section: &str) -> bool {
             s.toolbar_hidden = d.toolbar_hidden;
             s.panel_left = d.panel_left;
             s.address_row = d.address_row;
+            s.ui_style = d.ui_style;
         }
         "memory" => {
             s.restore_session = d.restore_session;

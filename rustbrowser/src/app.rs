@@ -3420,6 +3420,13 @@ impl App {
                 }
                 .to_string();
             }
+            "uiStyle" => {
+                self.store.settings.ui_style = if v.as_str() == Some("orvyn") {
+                    "orvyn".to_string()
+                } else {
+                    "chrome".to_string()
+                };
+            }
             "uiOpacity" => {
                 let n = v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok())).unwrap_or(100);
                 self.store.settings.ui_opacity = (n as u32).clamp(60, 100);

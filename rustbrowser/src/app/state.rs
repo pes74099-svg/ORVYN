@@ -192,6 +192,7 @@ impl App {
             "tabShape": self.store.settings.tab_shape,
             "uiRadius": self.store.settings.ui_radius,
             "uiFont": self.store.settings.ui_font,
+            "uiStyle": self.store.settings.ui_style,
             "uiOpacity": self.store.settings.ui_opacity,
             "uiBlur": self.store.settings.ui_blur,
             "wallpaper": self.store.settings.wallpaper,

@@ -62,6 +62,38 @@
   body.amoled .item:hover { background: #0c0c0c; }
   body.amoled .sep { background: #161616; }
   body.amoled .setsec .item { background: transparent; }
+
+  /* ---------- стиль Chrome (по умолчанию) ---------- */
+  body.style-chrome.light {
+    --bg: #dee1e6; --surface: #ffffff; --surface2: #f1f3f4; --surface3: #e8eaed;
+    --text: #202124; --muted: #5f6368; --accent: #1a73e8; --accent2: #1765cc;
+    --ok: #188038; --danger: #d93025; --amber: #b06000;
+    color-scheme: light;
+  }
+  body.style-chrome:not(.light) {
+    --bg: #202124; --surface: #292a2d; --surface2: #35363a; --surface3: #3c4043;
+    --text: #e8eaed; --muted: #9aa0a6; --accent: #8ab4f8; --accent2: #aecbfa;
+  }
+  body.style-chrome #tabbar { height: 44px; padding: 8px 6px 0 8px; background: var(--bg); border-bottom: 0; }
+  body.style-chrome .tab { height: 35px; border-radius: 8px 8px 0 0; background: transparent; border: 0;
+                           color: var(--muted); min-width: 140px; }
+  body.style-chrome .tab:hover { background: var(--surface2); color: var(--text); }
+  body.style-chrome .tab.active { background: var(--surface); color: var(--text); box-shadow: none; border-color: transparent; }
+  body.style-chrome .tab.active::after { display: none; }
+  body.style-chrome .tab .fav { background: var(--surface3); color: var(--muted); border-radius: 4px; }
+  body.style-chrome .tab.active .fav { background: transparent; }
+  body.style-chrome #toolbar { height: 48px; padding: 0 6px; background: var(--surface);
+                               border-bottom: 1px solid rgba(0,0,0,.12); }
+  body.style-chrome:not(.light) #toolbar { border-bottom-color: #3c4043; }
+  body.style-chrome .btn { width: 34px; height: 34px; border-radius: 50%; }
+  body.style-chrome .btn:hover { background: var(--surface2); }
+  body.style-chrome #omni { height: 36px; margin: 0 8px; border-radius: 18px;
+                            background: var(--surface2); border: 1px solid transparent; }
+  body.style-chrome #omni:focus-within { background: var(--surface); border-color: var(--accent);
+                                         box-shadow: 0 1px 6px rgba(32,33,36,.22); }
+  body.style-chrome #panel { border-radius: 12px; }
+  body.style-chrome .tab.sleep .ttl { font-style: normal; }
+  body.style-chrome #enginebtn { display: none; }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; height: 100%; overflow: hidden;
@@ -1480,6 +1512,11 @@
 
       h += '<div class="setsec" data-sec="look">';
       h += '<div class="sect">Внешний вид</div>';
+      h += '<div class="sform"><div class="fline"><span class="note" style="flex:1 1 auto">Стиль интерфейса</span><select data-set="uiStyle" data-k="uiStyle">' +
+           '<option value="chrome"' + (st.uiStyle !== "orvyn" ? " selected" : "") + '>Chrome — по умолчанию</option>' +
+           '<option value="orvyn"' + (st.uiStyle === "orvyn" ? " selected" : "") + '>ORVYN</option>' +
+           '</select></div>' +
+           '<div class="note">Chrome-стиль повторяет привычную раскладку: вкладки сверху, омнибокс-пилюля, круглые кнопки. Тема и акценты работают в обоих стилях.</div></div>';
       h += '<div class="sform"><div class="fline"><select data-set="theme" data-k="theme">' +
            '<option value="dark"' + (st.theme === "dark" ? " selected" : "") + '>Тёмная тема</option>' +
            '<option value="light"' + (st.theme === "light" ? " selected" : "") + '>Светлая тема</option>' +
@@ -2066,6 +2103,7 @@
     document.body.classList.toggle("haspanel", !!s.panel);
     document.body.classList.toggle("light", s.theme === "light");
     document.body.classList.toggle("amoled", s.theme === "amoled");
+    document.body.classList.toggle("style-chrome", s.uiStyle !== "orvyn");
     document.body.classList.toggle("maximized", !!s.maximized);
     const b = document.body;
     b.style.setProperty("--accent", s.accent || "#4fd1ff");
