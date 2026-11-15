@@ -145,6 +145,14 @@ impl App {
             }
             "syncPick" => self.sync_pick(),
             "syncNow" => self.sync_now(),
+            "suggest" => {
+                let open = v["open"].as_bool().unwrap_or(false);
+                if self.suggesting != open {
+                    self.suggesting = open;
+                    self.layout();
+                    self.refresh();
+                }
+            }
             "moveTab" => {
                 if let (Some(id), Some(index)) = (v["id"].as_u64(), v["index"].as_u64()) {
                     self.move_tab(id as usize, index as usize);

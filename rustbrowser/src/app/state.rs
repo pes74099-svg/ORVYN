@@ -307,6 +307,17 @@ impl App {
         let _ = self.chrome.evaluate_script(&js);
     }
 
+    pub(super) fn reload_newtabs(&mut self) {
+        let html = self.newtab_html();
+        for t in self.tabs.iter() {
+            if t.url == "orvyn://newtab" || t.url.is_empty() {
+                if let Some(wv) = t.webview.as_ref() {
+                    let _ = wv.load_html(&html);
+                }
+            }
+        }
+    }
+
     pub(super) fn reload_newtab(&mut self) {
         let html = self.newtab_html();
         if let Some(t) = self.tabs.get_mut(self.active) {

@@ -359,6 +359,8 @@ struct App {
     next_id: usize,
     store: storage::Store,
     panel: Option<String>,
+    /// Открыт список подсказок адресной строки: chrome-слой занимает всё окно.
+    suggesting: bool,
     blocked: u32,
     /// Заблокировано на конкретной странице (ключ — хост страницы).
     blocked_site: HashMap<String, u32>,
@@ -424,6 +426,27 @@ struct App {
     /// Проверка обновлений через GitHub Releases.
     update_checking: bool,
     update_result: Option<Result<update::Release, String>>,
+}
+
+/// Стандартные быстрые сайты новой вкладки.
+fn default_shortcuts() -> Vec<storage::Shortcut> {
+    let pairs = [
+        ("YouTube", "https://www.youtube.com"),
+        ("ВКонтакте", "https://vk.com"),
+        ("GitHub", "https://github.com"),
+        ("Steam", "https://store.steampowered.com"),
+        ("Википедия", "https://ru.wikipedia.org"),
+        ("Музыка", "#music"),
+        ("Почта", "https://mail.google.com"),
+        ("Карты", "https://maps.google.com"),
+    ];
+    pairs
+        .iter()
+        .map(|(title, url)| storage::Shortcut {
+            title: (*title).to_string(),
+            url: (*url).to_string(),
+        })
+        .collect()
 }
 
 fn rect(x: f64, y: f64, w: f64, h: f64) -> Rect {
@@ -662,6 +685,7 @@ impl App {
             next_id: 1,
             store,
             panel: None,
+            suggesting: false,
             blocked: 0,
             blocked_site: HashMap::new(),
             blocked_domains: HashMap::new(),
@@ -731,7 +755,7 @@ impl App {
     }
 
     fn chrome_height(&self) -> f64 {
-        if self.panel.is_some() {
+        if self.panel.is_some() || self.suggesting {
             return self.logical_size().1;
         }
         let mut h = TABBAR_H;
@@ -765,7 +789,7 @@ impl App {
             let Some(wv) = t.webview.as_ref() else { continue };
             let active = i == self.active;
             let _ = wv.set_bounds(cr);
-            let _ = wv.set_visible(active && self.panel.is_none());
+            let _ = wv.set_visible(active && self.panel.is_none() && !self.suggesting);
             let _ = wv.set_memory_usage_level(if active {
                 MemoryUsageLevel::Normal
             } else {
@@ -776,6 +800,18 @@ impl App {
 
     fn newtab_html(&self) -> String {
         let s = &self.store.settings;
+        let shortcuts = if self.store.shortcuts.is_empty() {
+            default_shortcuts()
+        } else {
+            self.store.shortcuts.clone()
+        };
+        let list: Vec<Value> = shortcuts
+            .iter()
+            .map(|x| json!({ "title": x.title, "url": x.url }))
+            .collect();
+        let shortcuts_json = serde_json::to_string(&list)
+            .unwrap_or_else(|_| "[]".to_string())
+            .replace("</", "<\\/");
         let font = match s.ui_font.as_str() {
             "system" => "system-ui, \"Segoe UI\", sans-serif",
             "arial" => "Arial, sans-serif",
@@ -801,6 +837,7 @@ impl App {
             .replace("{{ACCENT2}}", &s.accent2)
             .replace("{{FONT}}", font)
             .replace("{{WALL}}", &wall)
+            .replace("{{SHORTCUTS}}", &shortcuts_json)
     }
 
     fn new_tab(&mut self, url: Option<String>, activate: bool) {
