@@ -125,6 +125,50 @@
   .sign { position: relative; z-index: 1; margin-top: 14px; font-size: 10px; letter-spacing: .3em;
           text-transform: uppercase; color: #2c3850; padding-left: .3em; }
 
+  .editlink { margin-top: 16px; padding: 7px 14px; border-radius: 999px; border: 1px solid transparent;
+              background: transparent; color: #7c89a4; font: inherit; font-size: 12px; cursor: pointer; }
+  .editlink:hover { background: rgba(255,255,255,.06); color: #c7d2e5; }
+  body.light .editlink { color: #6b7a93; }
+  body.light .editlink:hover { background: rgba(20,40,70,.06); color: #24344c; }
+  body.style-chrome .editlink { color: #5f6368; }
+  body.style-chrome .editlink:hover { background: #f1f3f4; color: #202124; }
+  body.style-chrome.dark .editlink, body.style-chrome.amoled .editlink { color: #9aa0a6; }
+  body.style-chrome.dark .editlink:hover, body.style-chrome.amoled .editlink:hover { background: #303134; color: #e8eaed; }
+
+  #tileEditor { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.55);
+                display: grid; place-items: center; padding: 20px; }
+  #tileEditor.hidden { display: none; }
+  .tecard { width: min(580px, 100%); max-height: 82vh; overflow: auto; background: #0f141d;
+            border: 1px solid #243047; border-radius: 16px; padding: 16px; color: #e9eefb;
+            box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+  body.light .tecard { background: #fff; border-color: #dfe7f2; color: #1b2436; }
+  body.style-chrome .tecard { border-radius: 12px; }
+  .tehead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 15px; }
+  .tehead button { width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; }
+  .tehead button:hover { background: rgba(255,255,255,.08); }
+  body.light .tehead button:hover { background: #f1f3f4; }
+  .terow { display: grid; grid-template-columns: 30px 1fr 1.4fr 30px; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .terow .teicon { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+                   background: rgba(79,209,255,.12); color: var(--accent); font-size: 12px; font-weight: 700; }
+  .terow input { height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid #243047;
+                 background: #0a0f17; color: inherit; font: inherit; font-size: 13px; outline: none; min-width: 0; }
+  .terow input:focus { border-color: var(--accent); }
+  body.light .terow input { background: #f8fafc; border-color: #dbe3ef; }
+  .terow .tdel { width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: #ff8f98; cursor: pointer; }
+  .terow .tdel:hover { background: rgba(255,90,100,.12); }
+  .tefoot { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  .tefoot .sp { flex: 1 1 auto; }
+  .tefoot button { height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid #243047;
+                   background: #121a26; color: inherit; font: inherit; font-size: 12.5px; cursor: pointer; }
+  .tefoot button:hover { background: #182234; }
+  body.light .tefoot button { background: #f8fafc; border-color: #dbe3ef; }
+  body.light .tefoot button:hover { background: #eef3f9; }
+  .tefoot .primary { background: var(--accent); border-color: var(--accent); color: #051018; font-weight: 600; }
+  .tefoot .primary:hover { filter: brightness(1.08); background: var(--accent); }
+  .tenote { margin-top: 10px; font-size: 11.5px; color: #6d7b96; }
+  body.light .tenote { color: #6b7a93; }
+  .tiles .empty { grid-column: 1 / -1; text-align: center; color: #6d7b96; font-size: 12.5px; padding: 18px; }
+
   /* --- Chrome-стиль новой вкладки: без часов и снега, как в браузере Chrome --- */
   .tile.extra, .cust { display: none; }
   body.style-chrome {
@@ -249,16 +293,8 @@
       </button>
     </form>
 
-    <div class="tiles">
-      <a class="tile" href="https://www.youtube.com"><span class="logo t1">YT</span>YouTube</a>
-      <a class="tile" href="https://vk.com"><span class="logo t2">VK</span>ВКонтакте</a>
-      <a class="tile" href="https://github.com"><span class="logo t4">GH</span>GitHub</a>
-      <a class="tile" href="https://store.steampowered.com"><span class="logo t3">ST</span>Steam</a>
-      <a class="tile" href="https://ru.wikipedia.org"><span class="logo t5">W</span>Википедия</a>
-      <a class="tile music" href="#music" id="musictile"><span class="logo t6">♪</span>Музыка</a>
-      <a class="tile extra" href="https://mail.google.com"><span class="logo t7">M</span>Почта</a>
-      <a class="tile extra" href="https://maps.google.com"><span class="logo t8">K</span>Карты</a>
-    </div>
+    <div class="tiles" id="tiles"></div>
+    <button class="editlink" id="editTiles" type="button">Изменить ярлыки</button>
 
     <div class="badge"><span class="dot"></span>Реклама и трекеры отключены</div>
   </div>
@@ -275,17 +311,165 @@
     Настроить ORVYN
   </button>
 
+  <div id="tileEditor" class="hidden">
+    <div class="tecard">
+      <div class="tehead"><b>Быстрые сайты</b><button id="teClose" type="button" title="Закрыть">✕</button></div>
+      <div class="terows" id="teRows"></div>
+      <div class="tefoot">
+        <button id="teAdd" type="button">+ Добавить</button>
+        <span class="sp"></span>
+        <button id="teReset" type="button">Сбросить</button>
+        <button id="teSave" class="primary" type="button">Сохранить</button>
+      </div>
+      <div class="tenote">До 12 ярлыков. Адрес — http:// или https://. Для музыки можно оставить #music.</div>
+    </div>
+  </div>
+
 <script>
 (function () {
   const SNOW = {{SNOW}};
   const GLOW = {{GLOW}};
   const ANIM = {{ANIM}};
+  let SHORTCUTS = {{SHORTCUTS}};
+  const GRADS = ["t1", "t2", "t4", "t3", "t5", "t6", "t7", "t8"];
   if (!ANIM) document.body.classList.add("noanim");
   if (!GLOW) document.querySelectorAll(".glow").forEach((g) => g.remove());
 
   const ipc = (o) => { try { window.ipc.postMessage(JSON.stringify(o)); } catch (e) {} };
   const q = document.getElementById("q");
   const sf = document.getElementById("sf");
+
+  function escHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+  function tileLetter(s) {
+    if (s.url === "#music") return "♪";
+    try {
+      const host = new URL(s.url, location.href).hostname.replace(/^www\./, "").toLowerCase();
+      const known = {
+        "youtube.com": "YT", "youtu.be": "YT", "m.youtube.com": "YT",
+        "vk.com": "VK", "m.vk.com": "VK",
+        "github.com": "GH", "gist.github.com": "GH",
+        "steampowered.com": "ST", "store.steampowered.com": "ST",
+        "wikipedia.org": "W", "ru.wikipedia.org": "W", "en.wikipedia.org": "W",
+        "mail.google.com": "M", "maps.google.com": "K", "google.com": "G"
+      };
+      if (known[host]) return known[host];
+      const label = host.split(".").slice(-2, -1)[0] || host;
+      return (label.charAt(0) || "?").toUpperCase();
+    } catch (e) {
+      return (String(s.title || "?").charAt(0) || "?").toUpperCase();
+    }
+  }
+  function renderTiles() {
+    const box = document.getElementById("tiles");
+    if (!box) return;
+    if (!SHORTCUTS.length) {
+      box.innerHTML = '<div class="empty">Нет ярлыков — нажми «Изменить ярлыки».</div>';
+      return;
+    }
+    box.innerHTML = SHORTCUTS.map((s, i) =>
+      '<a class="tile' + (s.url === "#music" ? " music" : "") + '" href="' + escHtml(s.url) + '" data-i="' + i + '">' +
+        '<span class="logo ' + GRADS[i % GRADS.length] + '">' + escHtml(tileLetter(s)) + '</span>' +
+        escHtml(s.title || s.url) + '</a>'
+    ).join("");
+  }
+
+  const tilesBox = document.getElementById("tiles");
+  if (tilesBox) {
+    tilesBox.addEventListener("click", (e) => {
+      const a = e.target.closest(".tile");
+      if (!a) return;
+      const s = SHORTCUTS[Number(a.dataset.i)];
+      if (s && s.url === "#music") {
+        e.preventDefault();
+        ipc({ rb: "panel", name: "music" });
+      }
+    });
+  }
+
+  const editor = document.getElementById("tileEditor");
+  const rowsBox = document.getElementById("teRows");
+  function teAddRow(item) {
+    if (!rowsBox || rowsBox.children.length >= 12) return;
+    const row = document.createElement("div");
+    row.className = "terow";
+    row.innerHTML = '<span class="teicon">?</span>' +
+      '<input class="tename" placeholder="Название" value="' + escHtml(item.title || "") + '">' +
+      '<input class="teurl" placeholder="https://example.com" value="' + escHtml(item.url || "") + '">' +
+      '<button class="tdel" type="button" title="Удалить">✕</button>';
+    const name = row.querySelector(".tename");
+    const url = row.querySelector(".teurl");
+    const icon = row.querySelector(".teicon");
+    const upd = () => {
+      const src = String(name.value || url.value || "?").trim();
+      icon.textContent = src.charAt(0).toUpperCase() || "?";
+    };
+    name.addEventListener("input", upd);
+    url.addEventListener("input", upd);
+    row.querySelector(".tdel").onclick = () => {
+      if (rowsBox.children.length <= 1) {
+        name.value = "";
+        url.value = "";
+        upd();
+        return;
+      }
+      row.remove();
+    };
+    upd();
+    rowsBox.appendChild(row);
+  }
+  function openEditor() {
+    if (!editor) return;
+    rowsBox.innerHTML = "";
+    (SHORTCUTS.length ? SHORTCUTS : [{ title: "", url: "" }]).forEach(teAddRow);
+    editor.classList.remove("hidden");
+    const first = rowsBox.querySelector("input");
+    if (first) first.focus();
+  }
+  function closeEditor() {
+    if (editor) editor.classList.add("hidden");
+  }
+  const editBtn = document.getElementById("editTiles");
+  if (editBtn) editBtn.onclick = openEditor;
+  if (editor) {
+    editor.addEventListener("mousedown", (e) => { if (e.target === editor) closeEditor(); });
+    const closeBtn = document.getElementById("teClose");
+    if (closeBtn) closeBtn.onclick = closeEditor;
+    const addBtn = document.getElementById("teAdd");
+    if (addBtn) addBtn.onclick = () => teAddRow({ title: "", url: "" });
+    const resetBtn = document.getElementById("teReset");
+    if (resetBtn) resetBtn.onclick = () => {
+      if (confirm("Вернуть стандартные ярлыки?")) {
+        ipc({ rb: "shortcutsReset" });
+        closeEditor();
+      }
+    };
+    const saveBtn = document.getElementById("teSave");
+    if (saveBtn) saveBtn.onclick = () => {
+      const items = [];
+      rowsBox.querySelectorAll(".terow").forEach((r) => {
+        let url = r.querySelector(".teurl").value.trim();
+        const title = r.querySelector(".tename").value.trim();
+        if (!url) return;
+        if (url !== "#music" && !/^https?:\/\//i.test(url)) url = "https://" + url;
+        if (url !== "#music" && !/^https?:\/\//i.test(url)) return;
+        items.push({ title: title || url, url });
+      });
+      if (!items.length) {
+        alert("Добавь хотя бы один ярлык.");
+        return;
+      }
+      items.length = Math.min(items.length, 12);
+      SHORTCUTS = items;
+      renderTiles();
+      ipc({ rb: "shortcuts", items });
+      closeEditor();
+    };
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeEditor(); });
+
+  renderTiles();
 
   function looksLikeUrl(v) {
     if (/^(https?|file):\/\//i.test(v)) return true;

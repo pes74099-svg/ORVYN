@@ -96,6 +96,37 @@ impl App {
                     self.refresh();
                 }
             }
+            "shortcuts" => {
+                let mut list = Vec::new();
+                if let Some(items) = v["items"].as_array() {
+                    for it in items.iter().take(12) {
+                        let url = it["url"].as_str().unwrap_or("").trim().to_string();
+                        let title = it["title"].as_str().unwrap_or("").trim().to_string();
+                        let ok = url == "#music"
+                            || url.starts_with("http://")
+                            || url.starts_with("https://");
+                        if !ok || url.is_empty() {
+                            continue;
+                        }
+                        list.push(storage::Shortcut {
+                            title: if title.is_empty() { url.clone() } else { title },
+                            url,
+                        });
+                    }
+                }
+                self.store.shortcuts = list;
+                storage::save(&self.store);
+                self.reload_newtabs();
+                self.status = "Быстрые сайты сохранены.".to_string();
+                self.refresh();
+            }
+            "shortcutsReset" => {
+                self.store.shortcuts.clear();
+                storage::save(&self.store);
+                self.reload_newtabs();
+                self.status = "Быстрые сайты сброшены.".to_string();
+                self.refresh();
+            }
             "search" => {
                 if let Some(q) = v["q"].as_str() {
                     if q.trim().is_empty() {

@@ -616,6 +616,14 @@ pub fn reset_section(s: &mut Settings, section: &str) -> bool {
     true
 }
 
+/// Быстрый сайт на новой вкладке.
+#[derive(Serialize, Deserialize, Clone, Debug, Default, PartialEq)]
+#[serde(default)]
+pub struct Shortcut {
+    pub title: String,
+    pub url: String,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default)]
 pub struct Store {
@@ -640,6 +648,8 @@ pub struct Store {
     pub saved_sets: Vec<SavedSet>,
     /// История ORVYN AI (если включено сохранение).
     pub ai_history: Vec<AiMessage>,
+    /// Свои быстрые сайты на новой вкладке. Пусто — стандартный набор.
+    pub shortcuts: Vec<Shortcut>,
 }
 
 impl Default for Store {
@@ -658,6 +668,7 @@ impl Default for Store {
             themes: Vec::new(),
             saved_sets: Vec::new(),
             ai_history: Vec::new(),
+            shortcuts: Vec::new(),
         }
     }
 }
