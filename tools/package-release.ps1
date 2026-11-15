@@ -19,7 +19,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $root = "C:\orbit"
-$version = "3.0.4"
+$version = "3.0.5"
 $rel = Join-Path $root "releases\ORVYN-$version"
 $browserDir = Join-Path $root "rustbrowser"
 $setupDir = Join-Path $root "rustbrowser-setup"
