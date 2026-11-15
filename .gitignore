@@ -1,0 +1,18 @@
+# Сборка
+target/
+**/target/
+
+# Готовый бинарник установщика (собирается из rustbrowser)
+rustbrowser-setup/browser.exe
+
+# Локальные релизы и резервные копии профиля
+releases/
+backups/
+
+# Мусор инструментов
+*.pdb
+*.log
+
+# Секреты (токен GitHub и прочее)
+.gh-token
+.env

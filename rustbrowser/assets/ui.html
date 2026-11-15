@@ -1,0 +1,2234 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<style>
+  :root {
+    --bg: #070a10;
+    --surface: #0e131c;
+    --surface2: #151c28;
+    --surface3: #1d2634;
+    --text: #e9eefb;
+    --muted: #8d9ab3;
+    --accent: #4fd1ff;
+    --accent2: #8b7cff;
+    --danger: #ff6b81;
+    --ok: #5be3a5;
+    --amber: #f0b45a;
+    --radius: 10px;
+    --ui-opacity: 1;
+    --ui-blur: 0px;
+    --ui-font: "Segoe UI", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  body.light {
+    --bg: #eef2f8;
+    --surface: #ffffff;
+    --surface2: #eef3fa;
+    --surface3: #e4ebf5;
+    --text: #1b2436;
+    --muted: #65738d;
+    --accent: #0e8fce;
+    --accent2: #6a5cff;
+    --ok: #17925f;
+    --amber: #a86a00;
+    --danger: #d43a52;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font: 13px/1.35 var(--ui-font);
+    user-select: none; -webkit-user-select: none;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  .row { display: flex; align-items: center; }
+  svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8;
+        stroke-linecap: round; stroke-linejoin: round; }
+
+  #backdrop { position: fixed; inset: 0; z-index: 0; display: none; overflow: hidden;
+    background:
+      radial-gradient(760px 460px at 82% -8%, rgba(79,209,255,.12), transparent 62%),
+      radial-gradient(620px 460px at 8% 108%, rgba(139,124,255,.12), transparent 62%),
+      var(--bg); }
+  #backdrop::after { content: ""; position: absolute; left: 50%; top: 52%; width: 1080px; height: 380px;
+    transform: translate(-50%, -50%) rotate(-16deg); border-radius: 50%;
+    border: 1px solid rgba(139,124,255,.22); box-shadow: 0 0 120px rgba(79,209,255,.06) inset; }
+  body.haspanel #backdrop { display: block; }
+  body.light #backdrop { background: var(--bg); }
+
+  /* ---------- вкладки ---------- */
+  #tabbar {
+    position: relative; z-index: 2;
+    height: 38px; display: flex; align-items: flex-end; gap: 2px;
+    padding: 6px 0 0 10px;
+    background: color-mix(in srgb, var(--bg) calc(var(--ui-opacity) * 100%), transparent);
+    border-bottom: 1px solid #161e2b;
+  }
+  body.light #tabbar { background: color-mix(in srgb, #eef3fa calc(var(--ui-opacity) * 100%), transparent); border-color: #dbe3ef; }
+  #tablist { display: flex; gap: 2px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+             flex: 1 1 auto; min-width: 0; }
+  #tablist::-webkit-scrollbar { display: none; }
+  .tab {
+    display: flex; align-items: center; gap: 7px; min-width: 118px; max-width: 228px;
+    height: 31px; padding: 0 8px 0 10px; border-radius: 9px 9px 0 0;
+    background: #0d121b; color: var(--muted); cursor: pointer; position: relative;
+    border: 1px solid transparent; border-bottom: none; flex: 0 0 auto;
+    transition: background .12s ease, color .12s ease;
+  }
+  body.light .tab { background: #e4ebf5; }
+  .tab:hover { background: var(--surface2); color: var(--text); }
+  .tab.active { background: var(--surface); color: var(--text); border-color: #1c2637;
+                box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+  body.light .tab.active { border-color: #d8e1ee; }
+  .tab.active::after {
+    content: ""; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2px;
+    border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    box-shadow: 0 0 10px rgba(79,209,255,.35);
+  }
+  .tab .fav {
+    width: 15px; height: 15px; border-radius: 50%; flex: 0 0 auto;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: grid; place-items: center; font-size: 8.5px; font-weight: 700; color: #051018;
+  }
+  .tab .gdot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto;
+                background: var(--gcolor, #8b7cff); box-shadow: 0 0 0 2px rgba(255,255,255,.06); }
+  .tab.grouped::before { content: ""; position: absolute; left: 6px; right: 6px; top: 0; height: 2px;
+                         border-radius: 0 0 2px 2px; background: var(--gcolor, #8b7cff); opacity: .9; }
+  .tab.pinned .gdot { display: none; }
+  .tab.incognito .fav { background: linear-gradient(135deg,#b39dff,#6d4bd8); }
+  .tab.active .fav { box-shadow: 0 0 0 2px rgba(79,209,255,.16); }
+  .tab .ttl { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+  .tab .x, .tab .pin { width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center;
+            font-size: 11px; opacity: 0; transition: opacity .12s, background .12s; }
+  .tab .mute { width: 14px; height: 14px; display: grid; place-items: center; color: var(--danger); flex: 0 0 auto; }
+  .tab .mute svg { width: 12px; height: 12px; }
+  .tab .x { color: var(--muted); }
+  .tab .pin svg { width: 12px; height: 12px; }
+  .tab:hover .x, .tab.active .x, .tab:hover .pin, .tab.pinned .pin { opacity: .62; }
+  .tab .x:hover, .tab .pin:hover { opacity: 1; background: var(--surface3); }
+  .tab.pinned { min-width: 52px; max-width: 52px; padding: 0 6px; justify-content: center; gap: 4px; }
+  .tab.pinned .ttl, .tab.pinned .x { display: none; }
+  .tab.pinned .pin { opacity: .95; color: var(--accent); }
+  .tab.loading .fav { animation: pulse 1s infinite ease-in-out; }
+  .tab.sleep { opacity: .68; }
+  .tab.sleep .fav { filter: grayscale(.4); }
+  .tab.sleep .ttl { font-style: italic; }
+  @keyframes pulse { 0%,100% { opacity: .35 } 50% { opacity: 1 } }
+  #addtab { width: 28px; height: 28px; border-radius: 9px; color: var(--muted); display: grid;
+            place-items: center; margin-left: 4px; flex: 0 0 auto; }
+  #addtab:hover { background: var(--surface2); color: var(--text); }
+  #winctl { display: flex; align-self: flex-start; height: 38px; margin-top: -6px; margin-left: 2px; flex: 0 0 auto; }
+  .wbtn { width: 46px; height: 38px; border-radius: 0; display: grid; place-items: center;
+          color: var(--muted); flex: 0 0 auto; }
+  .wbtn:hover { background: var(--surface2); color: var(--text); }
+  .wbtn.close:hover { background: #e81123; color: #fff; }
+  .wbtn svg { width: 11px; height: 11px; stroke-width: 1.4; }
+  #winmax .rest { display: none; }
+  body.maximized #winmax .maxi { display: none; }
+  body.maximized #winmax .rest { display: block; }
+
+  /* ---------- панель инструментов ---------- */
+  #toolbar { position: relative; z-index: 2;
+             height: 54px; display: flex; align-items: center; gap: 4px; padding: 0 10px;
+             background: color-mix(in srgb, var(--surface) calc(var(--ui-opacity) * 100%), transparent);
+             border-bottom: 1px solid #161e2b;
+             -webkit-backdrop-filter: blur(var(--ui-blur)) saturate(140%);
+             backdrop-filter: blur(var(--ui-blur)) saturate(140%); }
+  body.light #toolbar { border-color: #e0e7f1; }
+  .btn { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; color: var(--muted); position: relative; }
+  .btn:hover { background: var(--surface2); color: var(--text); }
+  .btn:disabled { opacity: .3; cursor: default; background: none; }
+  .btn .dot { position: absolute; right: 4px; top: 4px; width: 6px; height: 6px; border-radius: 50%;
+              background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+  #omni {
+    flex: 1 1 auto; display: flex; align-items: center; gap: 8px; height: 36px; margin: 0 7px;
+    padding: 0 11px; border-radius: 12px; background: #090e16; border: 1px solid #18212f;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  body.light #omni { background: #f5f8fc; border-color: #dbe3ef; }
+  #omni:focus-within { border-color: rgba(79,209,255,.55); box-shadow: 0 0 0 3px rgba(79,209,255,.11); }
+  #omni .lock { display: grid; place-items: center; flex: 0 0 auto; }
+  #omni input {
+    flex: 1 1 auto; background: none; border: 0; outline: none; color: var(--text);
+    font-size: 13px; min-width: 20px; user-select: text;
+  }
+  #omni input::placeholder { color: #4b5872; }
+  #star.on { color: #ffd15c; }
+  #star.on svg { fill: currentColor; }
+  #shield { display: flex; align-items: center; gap: 5px; height: 30px; padding: 0 9px; border-radius: 9px;
+            color: var(--ok); font-size: 11.5px; font-weight: 600; }
+  #shield:hover { background: var(--surface2); }
+  #shield svg { width: 15px; height: 15px; }
+  #shield .n { min-width: 8px; font-variant-numeric: tabular-nums; }
+  #incogBadge { display: none; align-items: center; gap: 6px; height: 26px; padding: 0 10px;
+                border-radius: 999px; font-size: 11px; font-weight: 600; color: #cbb8ff;
+                background: rgba(139,124,255,.12); border: 1px solid rgba(139,124,255,.35); }
+  #incogBadge.on { display: flex; }
+  body.light #incogBadge { color: #5b3fd0; }
+  #aibtn { color: var(--accent); }
+  #aibtn:hover { background: rgba(79,209,255,.1); }
+  #enginebtn { width: 30px; font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .02em; }
+  #enginebtn:hover { color: var(--text); background: var(--surface2); }
+
+  /* ---------- прогресс ---------- */
+  #progress { position: absolute; left: 0; top: 90px; height: 2px; width: 0; opacity: 0; z-index: 3;
+              background: linear-gradient(90deg, var(--accent), var(--accent2));
+              box-shadow: 0 0 12px rgba(79,209,255,.5);
+              transition: width .25s ease, opacity .3s ease; }
+  #progress.on { opacity: 1; }
+
+  /* ---------- панели ---------- */
+  #panel {
+    position: absolute; top: 84px; right: 10px; width: 352px; max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 98px);
+    overflow: auto; background: color-mix(in srgb, #0b1019 calc(var(--ui-opacity) * 100%), transparent);
+    border: 1px solid #1f2a3d; border-radius: 14px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.7), 0 0 0 1px rgba(79,209,255,.04) inset;
+    -webkit-backdrop-filter: blur(var(--ui-blur)) saturate(140%);
+    backdrop-filter: blur(var(--ui-blur)) saturate(140%);
+    padding: 6px; z-index: 50; animation: drop .14s ease-out;
+    scrollbar-width: thin; scrollbar-color: #2a3548 transparent;
+  }
+  body.light #panel { background: color-mix(in srgb, #ffffff calc(var(--ui-opacity) * 100%), transparent); border-color: #dfe6f1; box-shadow: 0 24px 64px rgba(20,35,60,.18); }
+  #panel.hidden { display: none; }
+  @keyframes drop { from { opacity: 0; transform: translateY(-7px) scale(.995) } to { opacity: 1; transform: none } }
+  .phead { display: flex; align-items: center; justify-content: space-between; padding: 8px 9px; }
+  .phead .t { font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-weight: 700; }
+  .phead .act { font-size: 11px; color: var(--accent); padding: 3px 8px; border-radius: 7px; }
+  .phead .act:hover { background: var(--surface2); }
+  .sect { padding: 10px 9px 3px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em;
+          color: var(--muted); font-weight: 700; }
+  .item { display: flex; align-items: center; gap: 10px; padding: 8px 9px; border-radius: 10px; cursor: pointer; }
+  .item:hover { background: var(--surface2); }
+  .item .ic { width: 26px; height: 26px; border-radius: 8px; background: var(--surface3);
+              display: grid; place-items: center; color: var(--muted); flex: 0 0 auto; }
+  .item .ic svg { width: 15px; height: 15px; }
+  .item .body { flex: 1 1 auto; min-width: 0; }
+  .item .l1 { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .l2 { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .del { opacity: 0; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center;
+               color: var(--muted); flex: 0 0 auto; }
+  .item:hover .del { opacity: .8; }
+  .item .del:hover { background: #3a2130; color: var(--danger); opacity: 1; }
+  .sep { height: 1px; background: #18202e; margin: 6px 8px; }
+  body.light .sep { background: #e6ecf5; }
+  .zoomrow { display: flex; align-items: center; gap: 6px; padding: 2px 7px 8px; }
+  .zoomrow .zbtn { width: 30px; height: 28px; border-radius: 8px; background: #090e16; display: grid;
+                   place-items: center; color: var(--muted); }
+  body.light .zoomrow .zbtn { background: #f5f8fc; }
+  .zoomrow .zbtn:hover { background: var(--surface2); color: var(--text); }
+  .zoomrow .val { flex: 1; text-align: center; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .about { padding: 8px 11px 12px; font-size: 11.5px; color: var(--muted); line-height: 1.65; }
+  .about b { color: var(--text); }
+  .about .k { color: var(--accent); }
+  .devcard { margin: 6px 9px 10px; padding: 12px 13px; border-radius: 12px;
+             background: linear-gradient(160deg, rgba(79,209,255,.055), rgba(139,124,255,.055)), var(--surface2);
+             border: 1px solid #1c2637; }
+  body.light .devcard { border-color: #dfe7f2; background: #f7faff; }
+  .devcard .dtitle { font-size: 12.5px; font-weight: 700; letter-spacing: .01em;
+                     background: linear-gradient(90deg, var(--accent), var(--accent2));
+                     -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .devcard .drow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+                   padding: 3px 0; font-size: 11.5px; }
+  .devcard .drole { color: var(--muted); flex: 0 0 auto; }
+  .devcard .dname { color: var(--text); text-align: right; }
+  .devcard .dcopy { margin-top: 9px; padding-top: 8px; border-top: 1px dashed #253149;
+                    color: var(--muted); font-size: 10.5px; line-height: 1.5; }
+  body.light .devcard .dcopy { border-color: #dbe4f0; }
+  .empty { padding: 16px 12px 20px; color: var(--muted); font-size: 12px; text-align: center; }
+  .bigstats { padding: 8px 14px 14px; }
+  .bigstats .n { font-size: 38px; font-weight: 200; letter-spacing: -1px; line-height: 1;
+                 background: linear-gradient(135deg, #bff0ff, #c9beff); -webkit-background-clip: text;
+                 background-clip: text; color: transparent; }
+  body.light .bigstats .n { background: none; color: #1b2436; }
+  .bigstats .h { margin-top: 7px; color: var(--muted); font-size: 12px; }
+  .bigstats .note { margin-top: 10px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+
+  /* ---------- безопасность ---------- */
+  #shield { transition: color .15s ease; }
+  #shield.sec-alert { color: var(--danger); }
+  #shield.sec-warn { color: var(--amber); }
+  #shield.sec-off { color: var(--muted); }
+  #shield.sec-idle { color: var(--muted); }
+  .seccard { margin: 4px 8px 10px; padding: 12px 13px; border-radius: 12px;
+             background: linear-gradient(160deg, rgba(79,209,255,.05), rgba(139,124,255,.04)), #0d131d;
+             border: 1px solid #1c2637; }
+  body.light .seccard { background: #f7faff; border-color: #dfe7f2; }
+  .seccard .st { display: flex; align-items: center; gap: 9px; }
+  .seccard .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok);
+                  box-shadow: 0 0 10px rgba(45,212,149,.7); flex: 0 0 auto; }
+  .seccard .dot.amber { background: var(--amber); box-shadow: 0 0 10px rgba(255,190,80,.6); }
+  .seccard .dot.red { background: var(--danger); box-shadow: 0 0 10px rgba(255,107,129,.6); }
+  .seccard .dot.gray { background: #5b6a86; box-shadow: none; }
+  .seccard .big { font-size: 13px; font-weight: 600; }
+  .seccard .host { margin-top: 3px; font: 11.5px/1.4 Consolas, monospace; color: var(--muted);
+                   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .seccard .why { margin-top: 8px; padding: 7px 9px; border-radius: 8px; font-size: 11px; line-height: 1.45;
+                  color: #ffb3bf; background: rgba(255,107,129,.08); border: 1px solid rgba(255,107,129,.25); }
+  body.light .seccard .why { color: #a3243a; background: #fff2f4; }
+  .secrow { display: flex; align-items: center; gap: 8px; padding: 6px 9px;
+            font-size: 11.5px; color: var(--muted); }
+  .secrow b { color: var(--text); font-weight: 600; }
+  .secrow .sp { flex: 1 1 auto; }
+  .trk { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+         padding: 5px 9px; font-size: 11px; color: var(--muted); }
+  .trk .h { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .trk .n { font-variant-numeric: tabular-nums; color: var(--accent); flex: 0 0 auto; }
+  .meter { height: 6px; border-radius: 99px; background: var(--surface3); overflow: hidden; margin: 4px 9px 8px; }
+  .meter span { display: block; height: 100%; border-radius: 99px;
+                background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .memrow { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 9px; }
+  .memrow:hover { background: var(--surface2); }
+  .memrow .t { flex: 1 1 auto; min-width: 0; }
+  .memrow .t .l1 { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .memrow .t .l2 { font-size: 10.5px; color: var(--muted); }
+  .memrow .mb { font-size: 11px; color: var(--accent); font-variant-numeric: tabular-nums; flex: 0 0 auto; }
+  .memrow .pbtn { height: 24px; font-size: 10.5px; flex: 0 0 auto; }
+  .warnbox { margin: 6px 8px 8px; padding: 9px 11px; border-radius: 9px; font-size: 11px; line-height: 1.45;
+             color: #ffcf8a; background: rgba(255,190,80,.08); border: 1px solid rgba(255,190,80,.28); }
+  body.light .warnbox { color: #7a4b00; background: #fff8e8; border-color: #f0ddb0; }
+
+  /* ---------- музыка ---------- */
+  .music-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 2px 6px 10px; }
+  .mtile { display: flex; align-items: center; gap: 9px; padding: 9px; border-radius: 11px;
+           background: #0e141f; border: 1px solid #18202e; text-align: left; min-width: 0;
+           transition: background .14s, border-color .14s, transform .14s; }
+  body.light .mtile { background: #f5f8fc; border-color: #e0e7f2; }
+  .mtile:hover { background: #141c2a; border-color: #27344a; transform: translateY(-1px); }
+  body.light .mtile:hover { background: #eef3fa; border-color: #d5e0ef; }
+  .mtile .ml { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+               font-size: 10px; font-weight: 800; color: #061019; flex: 0 0 auto; }
+  .mtile .mn { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .mtile .mn b { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mtile .mn i { font-style: normal; font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-sc { background: linear-gradient(135deg,#ff8a3d,#ff4d6d); }
+  .m-ya { background: linear-gradient(135deg,#ffe066,#ffb020); }
+  .m-yt { background: linear-gradient(135deg,#ff7a7a,#ff2d55); }
+  .m-vk { background: linear-gradient(135deg,#6aa8ff,#4f7dff); }
+  .m-dz { background: linear-gradient(135deg,#b47bff,#7b5cff); }
+  .m-bc { background: linear-gradient(135deg,#5be3c0,#3aa8e0); }
+  .m-am { background: linear-gradient(135deg,#ffb15a,#ff6a3d); }
+  .m-rg { background: linear-gradient(135deg,#8bf0a5,#4fd1ff); }
+  .pform { padding: 2px 8px 9px; display: flex; flex-direction: column; gap: 7px; }
+  .pform .fline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .pform input, .pform select, .sform input, .sform select, .sform textarea {
+    min-width: 0; height: 30px; border-radius: 8px; background: #090e16; border: 1px solid #1c2637;
+    color: var(--text); font: inherit; font-size: 12px; padding: 0 9px; outline: none; user-select: text;
+  }
+  .sform textarea { height: auto; min-height: 64px; padding: 8px 9px; resize: vertical; line-height: 1.45; }
+  body.light .pform input, body.light .pform select, body.light .sform input, body.light .sform select,
+  body.light .sform textarea {
+    background: #f6f9fd; border-color: #dbe3ef;
+  }
+  .pform input:focus, .pform select:focus, .sform input:focus, .sform select:focus, .sform textarea:focus {
+    border-color: rgba(79,209,255,.5); box-shadow: 0 0 0 3px rgba(79,209,255,.09);
+  }
+  .pform select { width: 92px; flex: 0 0 auto; }
+  .pform .host { flex: 1 1 auto; }
+  .pform .port { width: 70px; flex: 0 0 auto; }
+  .pform .note, .sform .note { color: var(--muted); font-size: 10.5px; line-height: 1.55; }
+  .pstat { color: var(--muted); font-size: 10.5px; flex: 1 1 100%; min-height: 14px; line-height: 1.4; padding: 0 9px 6px; }
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 9px 4px; }
+  .swatch { width: 24px; height: 24px; border-radius: 8px; border: 1px solid rgba(255,255,255,.15); cursor: pointer; }
+  .swatch:hover { transform: scale(1.08); }
+  .pstat.ok { color: var(--ok); }
+  .pstat.bad { color: var(--danger); }
+  .pwval { font-family: Consolas, monospace; letter-spacing: 1px; }
+  .ai-chat { display: flex; flex-direction: column; gap: 7px; padding: 2px 9px 9px; }
+  .ai-msg { position: relative; padding: 8px 30px 8px 10px; border-radius: 10px; font-size: 11.5px;
+            line-height: 1.5; white-space: pre-wrap; word-break: break-word; border: 1px solid #1f2a3d;
+            background: var(--surface2); }
+  .ai-msg.user { margin-left: 28px; background: rgba(79,209,255,.09); border-color: rgba(79,209,255,.2); }
+  .ai-msg.bot { margin-right: 18px; }
+  .ai-msg .who { font-size: 9.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 4px; }
+  .ai-msg .ai-copy { position: absolute; right: 6px; top: 6px; opacity: .35; }
+  .ai-msg .ai-copy:hover { opacity: 1; }
+  .ai-empty { color: var(--muted); font-size: 11px; padding: 10px; text-align: center; }
+  .tabquick { margin: 2px 2px 7px; padding: 9px; border: 1px solid rgba(79,209,255,.18);
+              border-radius: 11px; background: rgba(79,209,255,.055); }
+  .tabquick .qt { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tabquick .qu { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .tabquick .qrow { display: flex; align-items: center; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+  .tabquick .pbtn { height: 26px; font-size: 11px; padding: 0 9px; }
+  .ctxrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 9px 8px;
+            padding: 7px 9px; border-radius: 9px; background: rgba(91,227,165,.08);
+            border: 1px solid rgba(91,227,165,.18); font-size: 11px; }
+  body.light .ai-msg { background: #f1f5fa; border-color: #dfe6f1; }
+  body.light .ai-msg.user { background: rgba(79,209,255,.08); }
+  .sprow .sic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+                background: var(--surface3); font-size: 16px; flex: 0 0 auto; }
+  .sprow.spactive { background: rgba(79,209,255,.07); box-shadow: inset 0 0 0 1px rgba(79,209,255,.18); }
+  .pbtn { height: 28px; padding: 0 10px; border-radius: 8px; background: #142033; border: 1px solid #223149;
+          color: #b9d8ea; font-size: 11.5px; }
+  body.light .pbtn { background: #eef3fa; border-color: #d9e2ef; color: #2c3c55; }
+  .pbtn:hover { background: #1a2a42; border-color: #2c405e; }
+  body.light .pbtn:hover { background: #e5edf8; border-color: #cbd9ea; }
+  .pbtn.primary { background: linear-gradient(135deg, var(--accent), var(--accent2));
+                  border-color: transparent; color: #061019; font-weight: 700; }
+  .pbtn:disabled { opacity: .45; cursor: default; }
+
+  /* чипсы разделов настроек */
+  .schip { height: 26px; padding: 0 9px; font-size: 11px; border-radius: 13px; }
+  .schip.on { background: linear-gradient(135deg, var(--accent), var(--accent2));
+              border-color: transparent; color: #061019; font-weight: 700; }
+  .sadv { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: #9fb6c9; }
+  body.light .sadv { color: #51698a; }
+  .setsec { display: block; }
+
+  /* ---------- настройки ---------- */
+  .sform { display: flex; flex-direction: column; gap: 6px; padding: 2px 9px 8px; }
+  .sform .fline { display: flex; align-items: center; gap: 6px; }
+  .sform .fline input { flex: 1 1 auto; }
+  .sform .fline .num { width: 74px; flex: 0 0 auto; }
+  .sform .fline .pbtn { flex: 0 0 auto; }
+  .sw { width: 38px; height: 21px; border-radius: 999px; background: #202a3b; position: relative;
+        flex: 0 0 auto; transition: background .16s ease; }
+  body.light .sw { background: #c9d4e4; }
+  .sw::after { content: ""; position: absolute; width: 15px; height: 15px; border-radius: 50%;
+               background: #8b94a8; top: 3px; left: 3px;
+               transition: transform .16s ease, background .16s ease; }
+  .sw.on { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+  .sw.on::after { transform: translateX(17px); background: #061019; }
+  body.noanim .sw, body.noanim .sw::after { transition: none; }
+  body.glow #toolbar {
+    background:
+      linear-gradient(90deg, rgba(79,209,255,.07), rgba(139,124,255,.05) 48%, transparent 82%),
+      var(--surface);
+  }
+  body.noanim .tab, body.noanim #panel, body.noanim .item { animation: none !important; transition: none !important; }
+  .danger { color: var(--danger); }
+  .pbtn.danger { color: var(--danger); border-color: rgba(255,107,129,.35); }
+
+  /* ---------- загрузки ---------- */
+  .qrbox { display: flex; justify-content: center; padding: 18px 12px 8px; }
+  .qrbox svg { width: 252px; height: 252px; border-radius: 12px; background: #fff; padding: 10px; }
+  .qrurl { padding: 0 12px 14px; font: 11.5px/1.5 Consolas, monospace; color: var(--muted);
+           text-align: center; overflow-wrap: anywhere; user-select: text; }
+  .dl { padding: 6px 8px 9px; }
+  .dl .top { display: flex; align-items: center; gap: 8px; }
+  .dl .nm { flex: 1 1 auto; min-width: 0; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dl .st { font-size: 10.5px; color: var(--muted); flex: 0 0 auto; }
+  .dl .bar { height: 5px; margin-top: 7px; border-radius: 99px; background: var(--surface3); overflow: hidden; }
+  .dl .bar span { display: block; height: 100%; width: 0; border-radius: 99px;
+                  background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .2s; }
+  .dl .meta { margin-top: 5px; font-size: 10.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+  .dl .btns { display: flex; gap: 6px; margin-top: 7px; }
+  .dl .btns .pbtn { height: 25px; font-size: 11px; }
+  .badge { display: inline-grid; place-items: center; min-width: 15px; height: 15px; padding: 0 4px;
+           border-radius: 99px; background: var(--accent2); color: #fff; font-size: 9.5px; font-weight: 700; }
+
+  /* ---------- оформление ORVYN 2.2 ---------- */
+  .btn, #omni, #panel, .item, .pbtn, .zbtn { border-radius: var(--radius); }
+  body.panel-left #panel { left: 10px; right: auto; }
+  body.toolbar-hidden #toolbar { display: none; }
+  body.toolbar-hidden #progress { top: 36px; }
+  body.toolbar-hidden #panel { top: 46px; }
+  body.addr-row #toolbar { height: 88px; flex-wrap: wrap; align-content: center; }
+  body.addr-row #omni { order: 10; flex: 1 1 100%; margin: 0 0 6px; }
+  body.addr-row #progress { top: 124px; }
+  body.shape-pill .tab { border-radius: 16px 16px 0 0; }
+  body.shape-square .tab { border-radius: 0; }
+  body.shape-pill .btn, body.shape-pill #omni, body.shape-pill .pbtn,
+  body.shape-pill .item, body.shape-pill .zbtn { border-radius: 999px; }
+  body.shape-square .btn, body.shape-square #omni, body.shape-square .pbtn,
+  body.shape-square .item, body.shape-square .zbtn { border-radius: 3px; }
+  body.wall-aurora {
+    background:
+      radial-gradient(900px 560px at 12% -10%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 64%),
+      radial-gradient(820px 620px at 92% 112%, color-mix(in srgb, var(--accent2) 20%, transparent), transparent 64%),
+      var(--bg);
+  }
+  body.wall-grid {
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 34px 34px;
+  }
+  body.wall-dots {
+    background-color: var(--bg);
+    background-image: radial-gradient(circle, rgba(255,255,255,.075) 1px, transparent 1.3px);
+    background-size: 21px 21px;
+  }
+  body.wall-paper { background: linear-gradient(180deg, #121824, #090d14 70%); }
+  body.light.wall-grid {
+    background-image:
+      linear-gradient(rgba(20,40,70,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,40,70,.055) 1px, transparent 1px);
+  }
+  body.light.wall-dots { background-image: radial-gradient(circle, rgba(20,40,70,.08) 1px, transparent 1.3px); }
+  body.light.wall-paper { background: linear-gradient(180deg, #ffffff, #eef3fa); }
+  #showbar { display: none; width: 28px; height: 28px; border-radius: 9px; color: var(--muted);
+             place-items: center; flex: 0 0 auto; margin-left: 4px; }
+  #showbar:hover { background: var(--surface2); color: var(--text); }
+  body.toolbar-hidden #showbar { display: grid; }
+
+  @media (max-width: 900px) {
+    #home { display: none; }
+  }
+  @media (max-width: 720px) {
+    #toolbar { gap: 2px; padding: 0 5px; }
+    #omni { margin: 0 2px; }
+    #musicbtn, #home { display: none; }
+    #panel { left: 8px; right: 8px; width: auto; max-width: none; }
+    .tab { min-width: 92px; max-width: 160px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+  <div id="backdrop"></div>
+
+  <div id="tabbar" class="row">
+    <div id="tablist"></div>
+    <button id="addtab" title="Новая вкладка (Ctrl+T)">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <button id="showbar" title="Показать панель инструментов (Ctrl+Shift+B)">
+      <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div id="winctl">
+      <button class="wbtn" id="winmin" data-a="winMin" title="Свернуть">
+        <svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>
+      </button>
+      <button class="wbtn" id="winmax" data-a="winMax" title="Развернуть">
+        <svg class="maxi" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+        <svg class="rest" viewBox="0 0 24 24"><rect x="5" y="8" width="11" height="11" rx="1"/><path d="M8 8V5h11v11h-3"/></svg>
+      </button>
+      <button class="wbtn close" id="winclose" data-a="winClose" title="Закрыть">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="toolbar" class="row">
+    <button class="btn" id="back" title="Назад (Alt+←)">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="btn" id="fwd" title="Вперёд (Alt+→)">
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="btn" id="reload" title="Обновить (F5)">
+      <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+    </button>
+    <button class="btn" id="home" title="Домой (Alt+Home)">
+      <svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 10v10h14V10"/></svg>
+    </button>
+    <button class="btn" id="enginebtn" title="Поиск: DuckDuckGo. Нажми, чтобы сменить">D</button>
+    <div id="omni">
+      <span class="lock" id="lockIcon" title="Соединение">
+        <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      </span>
+      <input id="url" spellcheck="false" autocomplete="off" placeholder="Поиск или адрес">
+    </div>
+    <div id="incogBadge" title="Режим инкогнито">
+      <svg viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M2 12h4l2-5 4 10 3-6 2 1h5"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+      Инкогнито
+    </div>
+    <button class="btn" id="star" title="В закладки (Ctrl+D)">
+      <svg viewBox="0 0 24 24"><path d="M12 3.6l2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 17l-5.3 2.8 1.1-5.9L3.5 9.8l5.9-.8z"/></svg>
+    </button>
+    <button class="btn" id="downloads" title="Загрузки">
+      <svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>
+      <span class="dot" id="dldot" style="display:none"></span>
+    </button>
+    <button class="btn" id="musicbtn" title="Музыка">
+      <svg viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="7" rx="2"/><rect x="17" y="14" width="4" height="7" rx="2"/></svg>
+    </button>
+    <div id="shield" title="Заблокировано рекламы и трекеров">
+      <svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.4-3 8-7 9-4-1-7-4.6-7-9V6z"/><path d="M9 12l2 2 4-4.5"/></svg>
+      <span class="n" id="blockedn">0</span>
+    </div>
+    <button class="btn" id="aibtn" title="ORVYN AI (Alt+A)">
+      <svg viewBox="0 0 24 24"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/></svg>
+    </button>
+    <button class="btn" id="menu" title="Меню и настройки">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg>
+    </button>
+  </div>
+
+  <div id="progress"></div>
+  <div id="panel" class="hidden"></div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const ipc = (o) => { try { window.ipc.postMessage(JSON.stringify(o)); } catch (e) {} };
+  function copyPlain(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.cssText = "position:fixed;left:-9999px;top:0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    ta.remove();
+  }
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // Настройки: выбранный раздел и режим «расширенные». Переживают перерисовку панели.
+  let setSec = "all";
+  let setAdv = false;
+  try { setAdv = localStorage.getItem("orvyn.adv") === "1"; } catch (e) {}
+
+  let st = {
+    tabs: [], url: "", title: "", canBack: false, canForward: false, loading: false,
+    bookmarked: false, incognito: false, blocked: 0, bookmarks: [], history: [], panel: null,
+    muted: false,
+    zoom: 1, theme: "dark", snow: true, glow: true, anim: true,
+    proxyOn: false, proxyReady: false, proxyKind: "socks5", proxyHost: "", proxyPort: "",
+    proxyStatus: "", searchEngine: "ddg", homepage: "orvyn://newtab", restoreSession: true,
+    memorySaver: true, idleMinutes: 30, ramLimit: 2048, hwAccel: true, bgLimit: true,
+    permNotifications: false, permGeolocation: false, permCamera: false, permMicrophone: false,
+    protectionOn: true, redirectGuard: true, downloadGuard: true, mouseGestures: true, tabMetrics: true, lazyTabs: true,
+    siteBlocked: 0, topBlocked: [],
+    security: { level: "idle", label: "", host: "", https: false, protected: true, internal: true, warning: null, perms: {} },
+    lastFreed: 0, suggestDiscard: false,
+    cleanSize: 0, cleanScanning: false, usage: [], usageScanning: false, lastClean: 0,
+    cleanHistory: false, cleanCache: true, cleanCookies: false, autoClean: false, autoCleanDays: 7,
+    qrUrl: "", qrSvg: "",
+    closeWarn: true,
+    workspaces: [], workspaceActive: 0, sets: [],
+    bkBookmarks: true, bkSettings: true, bkHistory: true, bkSession: true, bkSpaces: true, bkSets: true, bkReplace: false,
+    accent: "#4fd1ff", accent2: "#8b7cff", tabShape: "rounded", uiRadius: 10, uiFont: "segoe",
+    uiOpacity: 100, uiBlur: 0, wallpaper: "none", toolbarHidden: false, panelLeft: false,
+    addressRow: false, themes: [], themeJson: "",
+    maximized: false, importBrowsers: [],
+    warpAvailable: false, warpStatus: "Unknown", warpSince: 0, warpBusy: false, warpError: "", warpAuto: false,
+    startupMs: 0,
+    translateLang: "ru",
+    aiOn: true, aiSave: true, aiBusy: false, aiError: "", aiModel: "GPT-OSS 20B", aiMessages: [], aiContextChars: 0,
+    vault: null, vaultExists: false, vaultError: "", vaultOrigin: "",
+    status: "", downloads: [], dlActive: 0, closedCount: 0, sleeping: 0,
+    ram: 0, cpu: 0, procs: 0
+  };
+  let typing = false;
+
+  const MUSIC = [
+    { n: "SoundCloud", u: "https://soundcloud.com", s: "бесплатно, без подписки", c: "m-sc", l: "SC" },
+    { n: "Яндекс Музыка", u: "https://music.yandex.ru", s: "бесплатный тариф", c: "m-ya", l: "ЯМ" },
+    { n: "YouTube Music", u: "https://music.youtube.com", s: "бесплатно", c: "m-yt", l: "YT" },
+    { n: "VK Музыка", u: "https://vk.com/audio", s: "бесплатно", c: "m-vk", l: "VK" },
+    { n: "Deezer", u: "https://www.deezer.com", s: "free-тариф", c: "m-dz", l: "DZ" },
+    { n: "Bandcamp", u: "https://bandcamp.com", s: "бесплатно / поддержать", c: "m-bc", l: "BC" },
+    { n: "Audiomack", u: "https://audiomack.com", s: "бесплатно", c: "m-am", l: "AM" },
+    { n: "Radio Garden", u: "https://radio.garden", s: "радио со всего мира", c: "m-rg", l: "RG" }
+  ];
+
+  const I = {
+    star: '<svg viewBox="0 0 24 24"><path d="M12 3.6l2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 17l-5.3 2.8 1.1-5.9L3.5 9.8l5.9-.8z"/></svg>',
+    clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+    code: '<svg viewBox="0 0 24 24"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg>',
+    info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
+    trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>',
+    globe: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14 0 18-3-4-3-14.5 0-18z"/></svg>',
+    gear: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    snow: '<svg viewBox="0 0 24 24"><path d="M12 2v20M4.5 6.5l15 11M19.5 6.5l-15 11"/></svg>',
+    glow: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>',
+    anim: '<svg viewBox="0 0 24 24"><path d="M3 14c3 0 3-4 6-4s3 4 6 4 3-4 6-4"/><path d="M3 8c3 0 3-4 6-4s3 4 6 4 3-4 6-4" opacity=".45"/></svg>',
+    music: '<svg viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="7" rx="2"/><rect x="17" y="14" width="4" height="7" rx="2"/></svg>',
+    shield: '<svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.4-3 8-7 9-4-1-7-4.6-7-9V6z"/></svg>',
+    eye: '<svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+    down: '<svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>',
+    chip: '<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
+    mask: '<svg viewBox="0 0 24 24"><path d="M2 12h4l2-5 4 10 3-6 2 1h5"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>',
+    pin: '<svg viewBox="0 0 24 24"><path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/></svg>',
+    reset: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
+    lock: '<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+    bell: '<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20h4"/></svg>',
+    cam: '<svg viewBox="0 0 24 24"><rect x="3" y="7" width="12" height="10" rx="2"/><path d="M15 10l6-3v10l-6-3"/></svg>',
+    mic: '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+    mute: '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l4 6M21 9l-4 6"/></svg>'
+  };
+
+  const ORVYN_NEWTAB = "orvyn://newtab";
+  const ORVYN_SEARCH = "orvyn://search?q=";
+  const SPACE_ICONS = { star: "★", work: "💼", study: "📚", game: "🎮", home: "🏠", globe: "🌐" };
+  const GROUP_COLORS = ["#4fd1ff", "#5be3a5", "#ffd166", "#ff8fd6", "#a97bff", "#f0b45a", "#7ad7ff", "#ff6b81"];
+  function groupColor(name) {
+    let h = 0;
+    const s = String(name || "");
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return GROUP_COLORS[h % GROUP_COLORS.length];
+  }
+  const FONTS = {
+    segoe: '"Segoe UI", system-ui, sans-serif',
+    system: 'system-ui, "Segoe UI", sans-serif',
+    arial: 'Arial, sans-serif',
+    georgia: 'Georgia, serif',
+    consolas: 'Consolas, monospace'
+  };
+  const TR_LANGS = [
+    ["ru", "Русский"], ["en", "Английский"], ["de", "Немецкий"], ["fr", "Французский"],
+    ["es", "Испанский"], ["it", "Итальянский"], ["pt", "Португальский"], ["zh-CN", "Китайский (упрощённый)"],
+    ["zh-TW", "Китайский (традиционный)"], ["ja", "Японский"], ["ko", "Корейский"], ["ar", "Арабский"],
+    ["tr", "Турецкий"], ["uk", "Украинский"], ["pl", "Польский"], ["nl", "Нидерландский"],
+    ["sv", "Шведский"], ["no", "Норвежский"], ["da", "Датский"], ["fi", "Финский"],
+    ["cs", "Чешский"], ["sk", "Словацкий"], ["hu", "Венгерский"], ["ro", "Румынский"],
+    ["bg", "Болгарский"], ["sr", "Сербский"], ["hr", "Хорватский"], ["sl", "Словенский"],
+    ["bs", "Боснийский"], ["mk", "Македонский"], ["sq", "Албанский"], ["el", "Греческий"],
+    ["he", "Иврит"], ["fa", "Персидский"], ["hi", "Хинди"], ["bn", "Бенгальский"],
+    ["ur", "Урду"], ["ta", "Тамильский"], ["te", "Телугу"], ["ml", "Малаялам"],
+    ["kn", "Каннада"], ["gu", "Гуджарати"], ["mr", "Маратхи"], ["pa", "Панджаби"],
+    ["ne", "Непальский"], ["si", "Сингальский"], ["my", "Бирманский"], ["th", "Тайский"],
+    ["vi", "Вьетнамский"], ["id", "Индонезийский"], ["ms", "Малайский"], ["tl", "Филиппинский"],
+    ["sw", "Суахили"], ["af", "Африкаанс"], ["am", "Амхарский"], ["hy", "Армянский"],
+    ["az", "Азербайджанский"], ["ka", "Грузинский"], ["kk", "Казахский"], ["ky", "Киргизский"],
+    ["uz", "Узбекский"], ["tg", "Таджикский"], ["tk", "Туркменский"], ["mn", "Монгольский"],
+    ["be", "Белорусский"], ["lt", "Литовский"], ["lv", "Латышский"], ["et", "Эстонский"],
+    ["is", "Исландский"], ["ga", "Ирландский"], ["cy", "Валлийский"], ["gd", "Шотландский гэльский"],
+    ["mt", "Мальтийский"], ["eo", "Эсперанто"], ["la", "Латинский"], ["yi", "Идиш"],
+    ["eu", "Баскский"], ["ca", "Каталанский"], ["gl", "Галисийский"], ["fy", "Фризский"],
+    ["lb", "Люксембургский"], ["co", "Корсиканский"], ["ha", "Хауса"], ["ig", "Игбо"],
+    ["yo", "Йоруба"], ["zu", "Зулу"], ["xh", "Коса"], ["st", "Сесото"],
+    ["sn", "Шона"], ["so", "Сомали"], ["om", "Оромо"], ["rw", "Киньяруанда"],
+    ["ny", "Чичева"], ["mg", "Малагасийский"], ["mi", "Маори"], ["sm", "Самоанский"],
+    ["haw", "Гавайский"], ["ht", "Гаитянский креольский"], ["qu", "Кечуа"], ["gn", "Гуарани"],
+    ["ay", "Аймара"], ["jv", "Яванский"], ["su", "Сунданский"], ["ceb", "Себуано"],
+    ["hmn", "Хмонг"], ["lo", "Лаосский"], ["km", "Кхмерский"], ["dv", "Дивехи"],
+    ["ps", "Пушту"], ["ku", "Курдский (курманджи)"], ["ckb", "Курдский (сорани)"], ["ug", "Уйгурский"],
+    ["tt", "Татарский"], ["ce", "Чеченский"], ["cv", "Чувашский"], ["bua", "Бурятский"],
+    ["crh", "Крымскотатарский"], ["or", "Ория"], ["as", "Ассамский"], ["bho", "Бходжпури"],
+    ["doi", "Догри"], ["gom", "Конкани"], ["mai", "Майтхили"], ["mni-Mtei", "Мейтейлон (манипури)"],
+    ["lus", "Мизо"], ["nso", "Сепеди"], ["ts", "Тсонга"], ["ak", "Тви"],
+    ["ee", "Эве"], ["bm", "Бамбара"], ["kri", "Крио"], ["ln", "Лингала"],
+    ["lg", "Луганда"], ["ilo", "Илоканский"]
+  ];
+  const TR_QUICK = [
+    ["ru", "Русский"], ["en", "English"], ["de", "Deutsch"], ["fr", "Français"],
+    ["es", "Español"], ["zh-CN", "中文"], ["ja", "日本語"], ["tr", "Türkçe"],
+    ["uk", "Українська"], ["ar", "العربية"]
+  ];
+
+  function fmtTime(ts) {
+    const d = new Date(ts * 1000);
+    const now = new Date();
+    const same = d.toDateString() === now.toDateString();
+    const pad = (n) => String(n).padStart(2, "0");
+    return same ? pad(d.getHours()) + ":" + pad(d.getMinutes())
+                : pad(d.getDate()) + "." + pad(d.getMonth() + 1) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function fmtDur(sec) {
+    sec = Math.max(0, Number(sec) || 0);
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    const pad = (n) => String(n).padStart(2, "0");
+    return h > 0 ? h + " ч " + pad(m) + " мин" : (m > 0 ? m + " мин " + pad(s) + " с" : s + " с");
+  }
+  function fmtDay(ts) {
+    if (!ts) return "никогда";
+    const d = new Date(ts * 1000);
+    const pad = (n) => String(n).padStart(2, "0");
+    return pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + d.getFullYear();
+  }
+  function fmtBytes(n) {
+    n = Number(n) || 0;
+    if (n >= 1073741824) return (n / 1073741824).toFixed(2) + " ГБ";
+    if (n >= 1048576) return (n / 1048576).toFixed(1) + " МБ";
+    if (n >= 1024) return (n / 1024).toFixed(0) + " КБ";
+    return n + " Б";
+  }
+  function n1(n) {
+    n = Number(n) || 0;
+    return Math.round(n * 10) / 10;
+  }
+  function hostOf(u) {
+    if (!u) return "";
+    if (u === ORVYN_NEWTAB) return "Новая вкладка";
+    if (u.indexOf("orvyn://search") === 0) return "Поиск";
+    try { return new URL(u).hostname.replace(/^www\./, ""); }
+    catch (e) { return String(u).slice(0, 40); }
+  }
+  function urlText() {
+    const s = st.url || "";
+    if (!s || s === ORVYN_NEWTAB) return "";
+    if (s.indexOf(ORVYN_SEARCH) === 0) {
+      try { return "Поиск: " + decodeURIComponent(s.slice(ORVYN_SEARCH.length).replace(/\+/g, " ")); }
+      catch (e) { return s.slice(ORVYN_SEARCH.length); }
+    }
+    return s;
+  }
+
+  function renderTabs() {
+    const list = $("tablist");
+    list.innerHTML = "";
+    let activeEl = null;
+    for (const t of st.tabs) {
+      const el = document.createElement("div");
+      el.className = "tab" + (t.active ? " active" : "") + (t.loading ? " loading" : "") +
+                     (t.pinned ? " pinned" : "") + (t.incognito ? " incognito" : "") +
+                     (t.sleeping ? " sleep" : "");
+      el.dataset.tabId = String(t.id);
+      if (t.group) {
+        el.classList.add("grouped");
+        el.style.setProperty("--gcolor", groupColor(t.group));
+      }
+      const label = (t.title || hostOf(t.url) || "Новая вкладка").slice(0, 80);
+      const host = hostOf(t.url);
+      const letter = (host === "Новая вкладка" || host === "Поиск" ? "o" : host.trim().charAt(0)) || "o";
+      const title = t.incognito ? "Инкогнито" : label;
+      el.innerHTML = '<span class="fav">' + esc(t.incognito ? "I" : letter.toUpperCase()) + '</span>' +
+                     (t.group ? '<span class="gdot" title="Группа: ' + esc(t.group) + '"></span>' : '') +
+                     '<span class="ttl">' + esc(title) + '</span>' +
+                     (t.muted ? '<span class="mute" title="Звук выключен">' + I.mute + '</span>' : '') +
+                     '<span class="pin" title="' + (t.pinned ? "Открепить" : "Закрепить") + '">' + I.pin + '</span>' +
+                     '<span class="x" title="Закрыть">✕</span>';
+      el.onclick = (e) => {
+        if (e.target.closest(".x")) ipc({ cmd: "closeTab", id: t.id });
+        else if (e.target.closest(".mute")) ipc({ cmd: "muteTab", id: t.id });
+        else if (e.target.closest(".pin")) ipc({ cmd: "pinTab", id: t.id });
+        else ipc({ cmd: "selectTab", id: t.id });
+      };
+      el.onauxclick = (e) => { if (e.button === 1) ipc({ cmd: "closeTab", id: t.id }); };
+      el.oncontextmenu = (e) => {
+        e.preventDefault();
+        const name = prompt("Группа вкладки (пусто — убрать метку)", t.group || "");
+        if (name !== null) ipc({ cmd: "tabGroup", id: t.id, name: name });
+      };
+      el.title = (t.title || "") + (t.group ? " · группа: " + t.group : "") + " · ПКМ — группа";
+      if (t.active) activeEl = el;
+      list.appendChild(el);
+    }
+    if (activeEl) {
+      try { activeEl.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {}
+    }
+  }
+
+  function switchRow(on) { return '<span class="sw' + (on ? " on" : "") + '"></span>'; }
+
+  function saveInputs() {
+    const p = $("panel");
+    const vals = {};
+    p.querySelectorAll("input[data-k],select[data-k]").forEach((el) => {
+      vals[el.getAttribute("data-k")] = el.value;
+    });
+    const a = document.activeElement;
+    const key = a && a.getAttribute ? a.getAttribute("data-k") : null;
+    const focused = key && p.contains(a) ? key : null;
+    let caret = null;
+    if (focused) { try { caret = a.selectionStart; } catch (e) {} }
+    return { vals: vals, focused: focused, caret: caret };
+  }
+  function restoreInputs(snap) {
+    const p = $("panel");
+    p.querySelectorAll("input[data-k],select[data-k]").forEach((el) => {
+      const k = el.getAttribute("data-k");
+      if (Object.prototype.hasOwnProperty.call(snap.vals, k)) el.value = snap.vals[k];
+    });
+    if (snap.focused) {
+      const el = p.querySelector('[data-k="' + snap.focused + '"]');
+      if (el) {
+        el.focus();
+        try { el.setSelectionRange(snap.caret, snap.caret); } catch (e) {}
+      }
+    }
+  }
+  function proxyForm() {
+    return {
+      kind: ($("pkind") || {}).value || st.proxyKind,
+      host: ($("phost") || {}).value || "",
+      port: ($("pport") || {}).value || ""
+    };
+  }
+
+  function dlState(s) {
+    return { progress: "качается", paused: "пауза", completed: "готово",
+             blocked: "придержано", canceled: "отменено", interrupted: "ошибка" }[s] || s;
+  }
+
+  // Показывает только выбранный раздел настроек и прячет расширенное, если режим выключен.
+  function applySettingsView() {
+    const p = $("panel");
+    if (!p) return;
+    const term = (($("setsearch") || {}).value || "").trim().toLowerCase();
+    p.querySelectorAll(".setsec").forEach((sec) => {
+      const id = sec.getAttribute("data-sec");
+      let visible = 0;
+      sec.querySelectorAll(".item, .sform").forEach((el) => {
+        let show = setSec === "all" || id === setSec;
+        if (show && el.hasAttribute("data-adv") && !setAdv) show = false;
+        if (show && term && !el.innerText.toLowerCase().includes(term)) show = false;
+        el.style.display = show ? "" : "none";
+        if (show) visible++;
+      });
+      sec.querySelectorAll(".sect").forEach((el) => { el.style.display = term ? "none" : ""; });
+      sec.querySelectorAll(".sep").forEach((el) => { el.style.display = term || setSec !== "all" ? "none" : ""; });
+      sec.style.display = visible ? "" : "none";
+    });
+  }
+
+  function renderPanel() {
+    const p = $("panel");
+    if (!st.panel) { p.classList.add("hidden"); return; }
+    p.classList.remove("hidden");
+    const snap = saveInputs();
+    let h = "";
+
+    if (st.panel === "menu") {
+      const groupCount = new Set(st.tabs.filter((t) => t.group).map((t) => t.group)).size;
+      const cur = st.tabs.find((t) => t.id === currentId());
+      h += '<div class="phead"><span class="t">Меню</span><span class="act" data-a="close">Закрыть</span></div>';
+      if (cur) {
+        const curUrl = cur.url === ORVYN_NEWTAB ? "Внутренняя страница" : (cur.url.indexOf("orvyn://search") === 0 ? "Поиск ORVYN" : cur.url);
+        h += '<div class="tabquick"><div class="qt">' + esc(cur.title || "Без названия") + '</div>' +
+             '<div class="qu">' + esc(curUrl || "") + '</div>' +
+             '<div class="qrow">' +
+             '<button class="pbtn" data-a="pin">' + (cur.pinned ? "Открепить" : "Закрепить") + '</button>' +
+             '<button class="pbtn" data-a="mute">' + (cur.muted ? "Включить звук" : "Без звука") + '</button>' +
+             '<button class="pbtn" data-a="dup">Дублировать</button>' +
+             '<button class="pbtn danger" data-a="closeTab">Закрыть</button>' +
+             '</div>' +
+             '<div class="qrow"><button class="zbtn" data-zoom="-0.1">−</button>' +
+             '<span class="note" style="min-width:42px;text-align:center">' + Math.round(st.zoom * 100) + '%</span>' +
+             '<button class="zbtn" data-zoom="0.1">+</button>' +
+             '<button class="zbtn" data-zoom="0" title="Сбросить">1:1</button></div></div>';
+      }
+      h += '<div class="sect">Вкладки</div>';
+      h += '<div class="item" data-a="new"><span class="ic">' + I.plus + '</span><div class="body"><div class="l1">Новая вкладка</div><div class="l2">Ctrl+T</div></div></div>';
+      h += '<div class="item" data-a="incognito"><span class="ic">' + I.mask + '</span><div class="body"><div class="l1">Инкогнито</div><div class="l2">Ctrl+Shift+N · без истории</div></div></div>';
+      h += '<div class="item" data-a="reopen"><span class="ic">' + I.clock + '</span><div class="body"><div class="l1">Вернуть вкладку</div><div class="l2">Ctrl+Shift+T' + (st.closedCount ? " · " + st.closedCount : "") + '</div></div></div>';
+      h += '<div class="item" data-a="tabs"><span class="ic">' + I.globe + '</span><div class="body"><div class="l1">Поиск вкладок</div><div class="l2">Ctrl+Shift+A · открыто ' + st.tabs.length + '</div></div></div>';
+      h += '<div class="item" data-a="groups"><span class="ic">' + I.globe + '</span><div class="body"><div class="l1">Группы вкладок</div><div class="l2">' + (groupCount ? groupCount + ' групп · метки и цвета' : 'цветные метки на вкладках') + '</div></div></div>';
+      h += '<div class="item" data-a="spaces"><span class="ic">' + I.gear + '</span><div class="body"><div class="l1">Пространства</div><div class="l2">' + (st.workspaces.length ? st.workspaces.length + ' наборов вкладок' : 'учёба, работа, игры — отдельно') + '</div></div></div>';
+      h += '<div class="item" data-a="sets"><span class="ic">' + I.star + '</span><div class="body"><div class="l1">Наборы вкладок</div><div class="l2">' + (st.sets.length ? st.sets.length + ' сохранённых наборов' : 'сохранить вкладки на потом') + '</div></div></div>';
+      h += '<div class="sect">Инструменты</div>';
+      h += '<div class="item" data-a="ai"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">ORVYN AI</div><div class="l2">' + (st.aiOn ? 'быстро · ' + esc(st.aiModel || 'GPT-OSS 20B Fast') : 'выключен в настройках') + '</div></div></div>';
+      h += '<div class="item" data-a="translate"><span class="ic">' + I.globe + '</span><div class="body"><div class="l1">Перевести страницу</div><div class="l2">любой язык · Google Translate в новой вкладке</div></div></div>';
+      h += '<div class="item" data-a="reader"><span class="ic">' + I.eye + '</span><div class="body"><div class="l1">Режим чтения</div><div class="l2">убрать лишнее и читать спокойно</div></div></div>';
+      h += '<div class="item" data-a="find"><span class="ic">' + I.eye + '</span><div class="body"><div class="l1">Найти на странице</div><div class="l2">Ctrl+F</div></div></div>';
+      h += '<div class="item" data-a="screenshot"><span class="ic">' + I.cam + '</span><div class="body"><div class="l1">Скриншот страницы</div><div class="l2">целиком, в Pictures\\ORVYN</div></div></div>';
+      h += '<div class="item" data-a="savePage"><span class="ic">' + I.down + '</span><div class="body"><div class="l1">Сохранить для офлайна</div><div class="l2">один MHTML-файл в Downloads\\ORVYN</div></div></div>';
+      h += '<div class="item" data-a="qr"><span class="ic">' + I.globe + '</span><div class="body"><div class="l1">QR-код страницы</div><div class="l2">открыть адрес на телефоне</div></div></div>';
+      h += '<div class="item" data-a="copySel"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">Копировать выделенное</div><div class="l2">только текст, который выделен на странице</div></div></div>';
+      h += '<div class="item" data-a="copyLinks"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">Копировать ссылки</div><div class="l2">все адреса со страницы списком</div></div></div>';
+      h += '<div class="sect">Данные и защита</div>';
+      h += '<div class="item" data-a="bookmarks"><span class="ic">' + I.star + '</span><div class="body"><div class="l1">Закладки</div><div class="l2">' + st.bookmarks.length + '</div></div></div>';
+      h += '<div class="item" data-a="history"><span class="ic">' + I.clock + '</span><div class="body"><div class="l1">История</div><div class="l2">' + st.history.length + ' записей</div></div></div>';
+      h += '<div class="item" data-a="downloads"><span class="ic">' + I.down + '</span><div class="body"><div class="l1">Загрузки</div><div class="l2">' + st.downloads.length + ' файлов</div></div></div>';
+      h += '<div class="item" data-a="passwords"><span class="ic">' + I.lock + '</span><div class="body"><div class="l1">Пароли</div><div class="l2">' + (st.vault ? st.vault.count + ' записей · сейф открыт' : (st.vaultExists ? 'сейф закрыт' : 'создать локальный сейф')) + '</div></div></div>';
+      h += '<div class="item" data-a="clean"><span class="ic">' + I.trash + '</span><div class="body"><div class="l1">Чистка</div><div class="l2">кэш, cookies, история и место сайтов</div></div></div>';
+      h += '<div class="item" data-a="backup"><span class="ic">' + I.reset + '</span><div class="body"><div class="l1">Резервная копия</div><div class="l2">экспорт и импорт выбранных данных</div></div></div>';
+      h += '<div class="item" data-a="import"><span class="ic">' + I.down + '</span><div class="body"><div class="l1">Импорт из браузеров</div><div class="l2">Chrome, Edge, Firefox и другие</div></div></div>';
+      h += '<div class="item" data-a="monitor"><span class="ic">' + I.chip + '</span><div class="body"><div class="l1">Мониторинг</div><div class="l2">' + Math.round(st.ram) + ' МБ · CPU ' + n1(st.cpu) + '%</div></div></div>';
+      h += '<div class="item" data-a="warp"><span class="ic">' + I.shield + '</span><div class="body"><div class="l1">Cloudflare WARP</div><div class="l2">' + (st.warpStatus === "Connected" ? "подключён" : (st.warpAvailable ? "отключён" : "не установлен")) + '</div></div></div>';
+      h += '<div class="item" data-a="extensions"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">Расширения и скрипты</div><div class="l2">установка userscripts без магазина</div></div></div>';
+      h += '<div class="sect">Браузер</div>';
+      h += '<div class="item" data-a="settings"><span class="ic">' + I.gear + '</span><div class="body"><div class="l1">Настройки</div><div class="l2">поиск, тема, память, вкладки, приватность</div></div></div>';
+      h += '<div class="item" data-a="custom"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">Оформление</div><div class="l2">цвета, форма, шрифт, обои и профили</div></div></div>';
+      h += '<div class="item" data-a="music"><span class="ic">' + I.music + '</span><div class="body"><div class="l1">Музыка</div><div class="l2">бесплатные сервисы и обход региона</div></div></div>';
+      h += '<div class="item" data-a="devtools"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">DevTools</div><div class="l2">Ctrl+Shift+I</div></div></div>';
+      h += '<div class="item" data-a="about"><span class="ic">' + I.info + '</span><div class="body"><div class="l1">О браузере</div><div class="l2">ORVYN 2.2</div></div></div>';
+    }
+
+    if (st.panel === "music") {
+      h += '<div class="phead"><span class="t">Музыка</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="music-grid">';
+      for (const m of MUSIC) {
+        h += '<button class="mtile" data-music="' + esc(m.u) + '">' +
+             '<span class="ml ' + m.c + '">' + esc(m.l) + '</span>' +
+             '<span class="mn"><b>' + esc(m.n) + '</b><i>' + esc(m.s) + '</i></span></button>';
+      }
+      h += '</div>';
+      h += '<div class="phead"><span class="t">Обход региона</span><span class="act" data-a="userscripts">Скрипты</span></div>';
+      h += '<div class="pform">';
+      h += '<div class="fline">' +
+           '<select id="pkind" data-k="proxyKind">' +
+           '<option value="socks5"' + (st.proxyKind === "http" ? "" : " selected") + '>SOCKS5</option>' +
+           '<option value="http"' + (st.proxyKind === "http" ? " selected" : "") + '>HTTP</option>' +
+           '</select>' +
+           '<input class="host" id="phost" data-k="proxyHost" spellcheck="false" placeholder="сервер или IP" value="' + esc(st.proxyHost) + '">' +
+           '<input class="port" id="pport" data-k="proxyPort" inputmode="numeric" placeholder="порт" value="' + esc(st.proxyPort) + '">' +
+           '</div>';
+      h += '<div class="note">Нужен свой SOCKS5/HTTP-прокси или VPN-шлюз. Через него пойдут только музыкальные вкладки, обычные сайты останутся напрямую. На музыкальных страницах есть кнопка «Регион».</div>';
+      h += '<div class="fline">' +
+           '<button class="pbtn primary" data-a="proxyOn">' + (st.proxyOn ? "Обновить" : "Включить") + '</button>' +
+           '<button class="pbtn" data-a="proxyTest">Проверить</button>' +
+           (st.proxyOn ? '<button class="pbtn" data-a="proxyOff">Выключить</button>' : "") +
+           '</div>';
+      h += '<div class="pstat' + (st.proxyReady ? " ok" : "") + '">' + esc(st.proxyStatus || "") + '</div>';
+      h += '</div>';
+      h += '<div class="sep"></div>';
+      h += '<div class="item" data-a="userscripts"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">Скрипты для музыки</div><div class="l2">music-region.js, music-background.js</div></div></div>';
+    }
+
+    if (st.panel === "downloads") {
+      h += '<div class="phead"><span class="t">Загрузки</span><span class="act" data-a="dlFolder">Папка</span><span class="act" data-a="clearDl">Очистить</span></div>';
+      if (!st.downloads.length) h += '<div class="empty">Пока ничего не скачано.</div>';
+      for (const d of st.downloads.slice().reverse()) {
+        const pct = d.total > 0 ? Math.min(100, Math.round(d.bytes / d.total * 100)) : 0;
+        const size = fmtBytes(d.bytes) + (d.total > 0 ? " из " + fmtBytes(d.total) : "");
+        const speed = d.state === "progress" && d.speed > 0 ? " · " + fmtBytes(d.speed) + "/с" : "";
+        const canPause = d.state === "progress";
+        const canResume = d.state === "paused" || d.state === "interrupted" || d.state === "blocked";
+        const canCancel = d.state === "progress" || d.state === "paused" || d.state === "blocked";
+        h += '<div class="dl"><div class="top"><div class="nm" title="' + esc(d.url) + '">' + esc(d.name) + '</div>' +
+             '<div class="st">' + esc(dlState(d.state)) + '</div></div>' +
+             (d.state === "blocked" && d.reason ? '<div class="warnbox">Файл придержан: ' + esc(d.reason) + '. Продолжай, только если доверяешь источнику.</div>' : '') +
+             '<div class="bar"><span style="width:' + pct + '%"></span></div>' +
+             '<div class="meta"><span>' + size + speed + '</span><span>' + pct + '%</span></div>' +
+             '<div class="btns">' +
+             (canPause ? '<button class="pbtn" data-dl="pause" data-id="' + d.id + '">Пауза</button>' : '') +
+             (canResume ? '<button class="pbtn" data-dl="resume" data-id="' + d.id + '">Продолжить</button>' : '') +
+             (canCancel ? '<button class="pbtn danger" data-dl="cancel" data-id="' + d.id + '">Отменить</button>' : '') +
+             '<button class="pbtn" data-copydl="' + esc(d.url) + '">Ссылка</button>' +
+             (d.state === "completed" ? '<button class="pbtn" data-dl="open" data-id="' + d.id + '">Открыть</button>' +
+                '<button class="pbtn" data-dl="folder" data-id="' + d.id + '">Папка</button>' : '') +
+             '</div></div>';
+      }
+    }
+
+    if (st.panel === "monitor") {
+      h += '<div class="phead"><span class="t">Память и CPU</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="bigstats"><div class="n">' + Math.round(st.ram) + ' МБ</div>' +
+           '<div class="h">вся оболочка ORVYN вместе с WebView2 · ' + st.procs + ' процессов</div>' +
+           '<div class="h">CPU: ' + n1(st.cpu) + '% · вкладок: ' + st.tabs.length + ' · спят: ' + st.sleeping + '</div>' +
+           '<div class="note">Общая память и CPU — точные, по процессам WebView2. Память вкладки — оценка JS-heap через performance.memory: она не включает картинки и саму оболочку движка. Запуск: ' + st.startupMs + ' мс.</div></div>';
+      if (st.suggestDiscard) {
+        h += '<div class="warnbox">Есть неактивные вкладки, которые можно выгрузить и вернуть память. Они откроются заново по клику.<div style="margin-top:7px"><button class="pbtn" data-a="discardIdle">Выгрузить неактивные</button></div></div>';
+      }
+      if (st.lastFreed > 0) {
+        h += '<div class="secrow"><span>Последняя выгрузка освободила</span><span class="sp"></span><b>' + Math.round(st.lastFreed) + ' МБ</b></div>';
+      }
+      const list = st.tabs.slice().sort((a, b) => (b.heap || 0) - (a.heap || 0));
+      if (list.length) {
+        h += '<div class="sect">Вкладки</div>';
+        for (const t of list) {
+          const mb = t.sleeping ? "спит" : (st.tabMetrics ? (t.heap ? t.heap + " МБ" : "—") : "—");
+          const sub = t.sleeping ? "выгружена, откроется по клику" :
+            ((t.active ? "активная · " : "") + (hostOf(t.url) || "новая вкладка") + (t.idle ? " · простой " + t.idle + " мин" : ""));
+          h += '<div class="memrow"><div class="t"><div class="l1">' + esc(t.title || "Без названия") + '</div>' +
+               '<div class="l2">' + esc(sub) + '</div></div>' +
+               '<div class="mb">' + mb + '</div>' +
+               (t.discardable ? '<button class="pbtn" data-discard="' + t.id + '">Выгрузить</button>' : '') +
+               '</div>';
+        }
+      }
+      h += '<div class="sform"><div class="fline"><span class="note" style="flex:1 1 auto">Memory Saver: ' +
+           (st.memorySaver ? 'включён' : 'выключен') +
+           (st.memorySaver && st.idleMinutes ? ', простой ' + st.idleMinutes + ' мин' : '') +
+           (st.memorySaver && st.ramLimit ? ', лимит ' + st.ramLimit + ' МБ' : '') + '</span>' +
+           '<button class="pbtn" data-a="settings">Настроить</button></div>' +
+           '<div class="note">Ручная выгрузка не трогает активную, закреплённые вкладки и музыку. При включённом Memory Saver браузер выгружает сам по таймауту и лимиту RAM.</div></div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "clean") {
+      h += '<div class="phead"><span class="t">Чистка ORVYN</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="bigstats"><div class="n">' + (st.cleanScanning ? "…" : fmtBytes(st.cleanSize)) + '</div>' +
+           '<div class="h">профиль браузера: кэш, cookies, данные сайтов</div>' +
+           '<div class="note">Профиль лежит в папке ORVYN и очищается без удаления закладок и настроек.</div></div>';
+      h += '<div class="sect">Что чистить</div>';
+      h += '<div class="item" data-t="cleanHistory"><span class="ic">' + I.clock + '</span><div class="body"><div class="l1">История</div><div class="l2">' + st.history.length + ' записей</div></div>' + switchRow(st.cleanHistory) + '</div>';
+      h += '<div class="item" data-t="cleanCache"><span class="ic">' + I.chip + '</span><div class="body"><div class="l1">Кэш</div><div class="l2">картинки, скрипты, временные файлы</div></div>' + switchRow(st.cleanCache) + '</div>';
+      h += '<div class="item" data-t="cleanCookies"><span class="ic">' + I.globe + '</span><div class="body"><div class="l1">Cookies</div><div class="l2">входы на сайтах придётся повторить</div></div>' + switchRow(st.cleanCookies) + '</div>';
+      h += '<div class="sform"><div class="fline" style="flex-wrap:wrap">' +
+           '<button class="pbtn primary" data-a="cleanNow">Очистить выбранное</button>' +
+           '<button class="pbtn" data-a="clearCache">Только кэш</button></div>' +
+           '<div class="note">Галочки выше задают и ручную очистку, и автоочистку. История хранится в ORVYN, кэш и cookies — в профиле WebView2.</div></div>';
+      h += '<div class="sect">Топ сайтов по месту</div>';
+      h += '<div class="sform"><div class="fline"><button class="pbtn" data-a="cleanUsage" ' + (st.usageScanning ? "disabled" : "") + '>' + (st.usageScanning ? "Считаю…" : "Посчитать место") + '</button>' +
+           '<span class="note" style="flex:1 1 auto">до 20 последних сайтов</span></div></div>';
+      if (st.usage.length) {
+        for (const u of st.usage) {
+          h += '<div class="trk"><span class="h">' + esc(u.host) + '</span><span class="n">' + fmtBytes(u.bytes) + '</span></div>';
+        }
+      } else if (!st.usageScanning && st.usage && st.usage.length === 0 && st.lastClean) {
+        h += '<div class="note" style="padding:0 9px 6px">Нажми «Посчитать место», чтобы увидеть данные сайтов.</div>';
+      }
+      h += '<div class="sep"></div>';
+      h += '<div class="sect">Автоочистка</div>';
+      h += '<div class="item" data-t="autoClean"><span class="ic">' + I.clock + '</span><div class="body"><div class="l1">Чистить при запуске</div><div class="l2">по расписанию, без вопросов</div></div>' + switchRow(st.autoClean) + '</div>';
+      h += '<div class="sform"><div class="fline"><span class="note" style="flex:1 1 auto">Раз в сколько дней</span>' +
+           '<input class="num" data-set="autoCleanDays" data-k="autoCleanDays" inputmode="numeric" value="' + st.autoCleanDays + '"></div>' +
+           '<div class="note">' + (st.autoClean ? (st.lastClean ? "Последняя очистка: " + fmtDay(st.lastClean) : "Ещё не запускалась.") : "Автоочистка выключена.") + '</div></div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "spaces") {
+      const cur = st.workspaces.find((w) => w.active);
+      h += '<div class="phead"><span class="t">Рабочие пространства</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="bigstats"><div class="n">' + (cur ? esc(SPACE_ICONS[cur.icon] || "★") : "—") + '</div>' +
+           '<div class="h">' + (cur ? esc(cur.name) + " · вкладок: " + cur.count : "сейчас обычная сессия") + '</div>' +
+           '<div class="note">Пространство хранит свой набор вкладок. При переключении текущий набор сохраняется автоматически, а выбранный открывается заново. Вкладки загружаются по одной — память не тратится на все сразу.</div></div>';
+      if (cur) h += '<div class="sform"><div class="fline"><button class="pbtn" data-a="spaceSave">Обновить текущими вкладками</button></div></div>';
+      h += '<div class="sect">Новое пространство</div>';
+      h += '<div class="sform"><div class="fline"><input id="spacename" data-k="spacename" spellcheck="false" placeholder="Название: Учёба, Работа, Игры">' +
+           '<select id="spaceicon" data-k="spaceicon">' +
+           '<option value="study">📚 Учёба</option><option value="work">💼 Работа</option>' +
+           '<option value="game">🎮 Игры</option><option value="home">🏠 Дом</option>' +
+           '<option value="globe">🌐 Другое</option><option value="star">★ Своё</option>' +
+           '</select></div><div class="fline"><button class="pbtn primary" data-a="spaceNew">Создать из текущих вкладок</button></div></div>';
+      h += '<div class="sect">Мои пространства</div>';
+      if (!st.workspaces.length) h += '<div class="empty">Пока пусто. Создай первое пространство из открытых вкладок.</div>';
+      for (const w of st.workspaces) {
+        h += '<div class="item sprow' + (w.active ? " spactive" : "") + '" data-space="' + w.id + '" data-spacename="' + esc(w.name) + '">' +
+             '<span class="sic">' + (SPACE_ICONS[w.icon] || "★") + '</span>' +
+             '<div class="body"><div class="l1">' + esc(w.name) + (w.active ? ' <span class="badge">открыто</span>' : '') + '</div>' +
+             '<div class="l2">' + w.count + ' вкладок · нажми, чтобы открыть</div></div>' +
+             '<button class="del" data-spaceren="' + w.id + '" title="Переименовать">✎</button>' +
+             '<button class="del" data-spaceicon="' + w.id + '" title="Сменить иконку">⟳</button>' +
+             '<button class="del" data-spacedel="' + w.id + '" title="Удалить">' + I.trash + '</button></div>';
+      }
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "ai") {
+      h += '<div class="phead"><span class="t">ORVYN AI</span><span class="act" data-a="close">Закрыть</span></div>';
+      if (!st.aiOn) {
+        h += '<div class="bigstats"><div class="n">✦</div><div class="h">ORVYN AI выключен</div>' +
+             '<div class="note">Помощник не отправляет запросы. Включи его, если хочешь пользоваться бесплатным облачным AI.</div></div>';
+        h += '<div class="sform"><div class="fline"><button class="pbtn primary" data-t="aiOn">Включить ORVYN AI</button></div></div>';
+      } else {
+        h += '<div class="bigstats"><div class="n">✦</div><div class="h">' + esc(st.aiModel || "GPT-OSS 20B") + '</div>' +
+             '<div class="note">Бесплатный облачный AI через публичный API Pollinations. Без ключей, без локальной модели и без платного fallback. У бесплатного тарифа есть общие лимиты.</div></div>';
+        h += '<div class="ai-chat">';
+        if (!st.aiMessages.length) h += '<div class="ai-empty">Спроси что угодно: объяснить, написать код, перевести, сократить текст или просто поболтать.</div>';
+        for (let i = 0; i < st.aiMessages.length; i++) {
+          const m = st.aiMessages[i];
+          const user = m.role === "user";
+          h += '<div class="ai-msg ' + (user ? "user" : "bot") + '"><div class="who">' + (user ? "Ты" : "ORVYN AI") + '</div>' +
+               '<div class="txt">' + esc(m.content) + '</div>' +
+               '<button class="del ai-copy" data-aicopy="' + i + '" title="Копировать ответ">' + I.code + '</button></div>';
+        }
+        if (st.aiBusy) h += '<div class="ai-msg bot"><div class="who">ORVYN AI</div><div class="txt">Думаю…</div></div>';
+        h += '</div>';
+        if (st.aiError) h += '<div class="pstat bad">' + esc(st.aiError) + '</div>';
+        if (st.aiContextChars) {
+          h += '<div class="ctxrow"><span>Контекст страницы: ' + st.aiContextChars + ' символов · уйдёт только с вопросом</span>' +
+               '<button class="pbtn" data-a="aiClearContext">Убрать</button></div>';
+        }
+        h += '<div class="sform"><div class="fline"><textarea id="aiq" data-k="aiq" rows="3" placeholder="Спроси ORVYN AI…"></textarea></div>' +
+             '<div class="fline" style="flex-wrap:wrap"><button class="pbtn primary" data-a="aiSend"' + (st.aiBusy ? " disabled" : "") + '>Отправить</button>' +
+             '<button class="pbtn" data-a="aiContext">Взять текст страницы</button>' +
+             '<button class="pbtn" data-a="aiClear">Очистить историю</button></div>' +
+             '<div class="note">Текст страницы берётся только по кнопке и уходит вместе со следующим вопросом. Историю можно очистить или отключить сохранение.</div></div>';
+        h += '<div class="item" data-t="aiSave"><span class="ic">' + I.clock + '</span><div class="body"><div class="l1">Сохранять историю</div><div class="l2">' + (st.aiSave ? "в store.json на этом ПК" : "только до закрытия браузера") + '</div></div>' + switchRow(st.aiSave) + '</div>';
+        h += '<div class="item" data-t="aiOn"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">ORVYN AI включён</div><div class="l2">выключить можно в любой момент</div></div>' + switchRow(st.aiOn) + '</div>';
+      }
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "translate") {
+      const langs = TR_LANGS.slice().sort((a, b) => a[1].localeCompare(b[1], "ru"));
+      const known = langs.some(([c]) => c === st.translateLang);
+      const opts = (known ? "" : '<option value="' + esc(st.translateLang) + '" selected>' + esc(st.translateLang) + '</option>') +
+        langs.map(([c, n]) => '<option value="' + c + '"' + (c === st.translateLang ? " selected" : "") + '>' + esc(n) + '</option>').join("");
+      h += '<div class="phead"><span class="t">Перевод страницы</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="bigstats"><div class="n">🌐</div><div class="h">' + esc((st.security && st.security.host) || "текущая страница") + '</div>' +
+           '<div class="note">Google Translate откроется в новой вкладке. Исходный язык определяется автоматически, а выбранный язык ORVYN запомнит.</div></div>';
+      h += '<div class="sect">Быстрый перевод</div>';
+      h += '<div class="sform"><div class="fline" style="flex-wrap:wrap">' +
+           TR_QUICK.map(([c, n]) => '<button class="pbtn" data-trquick="' + c + '">' + esc(n) + '</button>').join("") +
+           '</div></div>';
+      h += '<div class="sect">Любой язык</div>';
+      h += '<div class="sform"><div class="fline"><select id="trlang" data-k="trlang">' + opts + '</select></div>' +
+           '<div class="fline"><input id="trcustom" data-k="trcustom" spellcheck="false" placeholder="Свой код языка, например yue (необязательно)"></div>' +
+           '<div class="fline"><button class="pbtn primary" data-a="translateGo">Перевести страницу</button></div>' +
+           '<div class="note">В списке — языки Google Translate. Если нужного нет, впиши код языка. Пустое поле кода использует выбор из списка.</div></div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "passwords") {
+      const locked = !st.vault;
+      h += '<div class="phead"><span class="t">Пароли</span>' +
+           (st.vault ? '<span class="act" data-a="vaultLock">Заблокировать</span>' : '') +
+           '<span class="act" data-a="close">Закрыть</span></div>';
+      if (!st.vaultExists) {
+        h += '<div class="bigstats"><div class="n">🔒</div><div class="h">локальный сейф паролей</div>' +
+             '<div class="note">Пароли шифруются на этом ПК. Мастер-пароль не сохраняется нигде — если забудешь, сейф не открыть. В сеть пароли не уходят.</div></div>';
+        h += '<div class="sform"><div class="fline"><input id="pvmaster" type="password" data-k="pvmaster" placeholder="Мастер-пароль (минимум 8 символов)"></div>' +
+             '<div class="fline"><input id="pvrepeat" type="password" data-k="pvrepeat" placeholder="Повтори мастер-пароль"></div>' +
+             '<div class="fline"><button class="pbtn primary" data-a="vaultCreate">Создать сейф</button>' +
+             '<button class="pbtn" data-a="vaultImport">Импорт…</button></div>' +
+             '<div class="note">Дальше сейф будет открываться этим мастер-паролем после запуска ORVYN.</div></div>';
+      } else if (locked) {
+        h += '<div class="bigstats"><div class="n">🔒</div><div class="h">сейф закрыт</div>' +
+             '<div class="note">Введи мастер-пароль, чтобы увидеть сохранённые логины и пароли.</div></div>';
+        h += '<div class="sform"><div class="fline"><input id="pvmaster" type="password" data-k="pvmaster" placeholder="Мастер-пароль"></div>' +
+             '<div class="fline"><button class="pbtn primary" data-a="vaultUnlock">Открыть сейф</button>' +
+             '<button class="pbtn" data-a="vaultImport">Импорт…</button>' +
+             '<button class="pbtn danger" data-a="vaultReset">Удалить сейф</button></div>' +
+             '<div class="note">Сейф хранится только на этом ПК. После 10 минут бездействия он закроется сам.</div></div>';
+      } else {
+        const entries = st.vault.entries.slice().sort((a, b) =>
+          (a.origin || "").localeCompare(b.origin || "", "ru") || (a.username || "").localeCompare(b.username || "", "ru"));
+        const pwc = {};
+        for (const e of entries) if (e.password) pwc[e.password] = (pwc[e.password] || 0) + 1;
+        const reused = entries.filter((e) => e.password && pwc[e.password] > 1).length;
+        h += '<div class="bigstats"><div class="n">' + entries.length + '</div><div class="h">записей · повторов: ' + reused + '</div>' +
+             '<div class="note">Кнопка «Заполнить» появляется только для сайта, к которому привязан пароль. Пароли не отправляются в сеть.</div></div>';
+        if (!entries.length) h += '<div class="empty">Пока пусто. Добавь первый логин и пароль ниже.</div>';
+        for (const e of entries) {
+          const match = !!st.vaultOrigin && e.origin.toLowerCase() === st.vaultOrigin.toLowerCase();
+          const shared = e.password && pwc[e.password] > 1;
+          h += '<div class="item"><span class="ic">' + I.lock + '</span><div class="body">' +
+               '<div class="l1">' + esc(e.title || e.origin) +
+               (match ? ' <span class="badge">этот сайт</span>' : '') +
+               (shared ? ' <span class="badge">повтор</span>' : '') + '</div>' +
+               '<div class="l2">' + esc(e.origin) + (e.username ? ' · ' + esc(e.username) : '') + '</div>' +
+               '<div class="l2"><span class="pwval" data-secret="' + esc(e.password) + '">••••••••</span> ' +
+               '<span class="badge" data-vaultshow="' + e.id + '">показать</span></div></div>' +
+               (match ? '<button class="pbtn primary" data-vaultfill="' + e.id + '">Заполнить</button>' : '') +
+               '<button class="del" data-vaultcopy="' + esc(e.password) + '" title="Копировать пароль">' + I.code + '</button>' +
+               '<button class="del" data-vaultedit="' + e.id + '" title="Изменить">✎</button>' +
+               '<button class="del" data-vaultdel="' + e.id + '" title="Удалить">' + I.trash + '</button></div>';
+        }
+        h += '<div class="sect">Добавить или изменить</div>';
+        h += '<div class="sform">' +
+             '<input type="hidden" id="pvid" data-k="pvid" value="">' +
+             '<div class="fline"><input id="pvorigin" data-k="pvorigin" spellcheck="false" value="' + esc(st.vaultOrigin) + '" placeholder="https://example.com"></div>' +
+             '<div class="fline"><input id="pvtitle" data-k="pvtitle" spellcheck="false" placeholder="Название (необязательно)"></div>' +
+             '<div class="fline"><input id="pvuser" data-k="pvuser" spellcheck="false" placeholder="Логин или почта"></div>' +
+             '<div class="fline"><input id="pvpassword" type="password" data-k="pvpassword" placeholder="Пароль">' +
+             '<button class="pbtn" data-a="vaultGen">Сгенерировать</button></div>' +
+             '<div class="fline"><select id="pvlen" data-k="pvlen"><option value="16">16</option><option value="20" selected>20</option><option value="24">24</option><option value="32">32</option></select>' +
+             '<button class="pbtn primary" data-a="vaultSave">Сохранить</button>' +
+             '<button class="pbtn" data-a="vaultNew">Очистить</button></div>' +
+             '<div class="note">Автозаполнение подставляет логин и пароль в форму входа по кнопке. На других сайтах эта запись не сработает.</div></div>';
+        h += '<div class="sect">Сейф</div>';
+        h += '<div class="sform"><div class="fline" style="flex-wrap:wrap">' +
+             '<button class="pbtn" data-a="vaultExport">Экспорт</button>' +
+             '<button class="pbtn" data-a="vaultImport">Импорт</button>' +
+             '<button class="pbtn danger" data-a="vaultReset">Удалить сейф</button></div>' +
+             '<div class="note">Экспорт — зашифрованный файл. Импорт заменит текущий сейф; для него понадобится мастер-пароль от файла.</div></div>';
+      }
+      if (st.vaultError) h += '<div class="pstat bad">' + esc(st.vaultError) + '</div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "groups") {
+      const gm = new Map();
+      for (const t of st.tabs) {
+        if (!t.group) continue;
+        gm.set(t.group, (gm.get(t.group) || 0) + 1);
+      }
+      const names = Array.from(gm.keys()).sort((a, b) => a.localeCompare(b, "ru"));
+      h += '<div class="phead"><span class="t">Группы вкладок</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="bigstats"><div class="n">' + names.length + '</div><div class="h">групп · вкладок с метками: ' + st.tabs.filter((t) => t.group).length + '</div>' +
+           '<div class="note">Группа — это цветная метка, вкладки остаются на своих местах и не пропадают при переключении. Задать или сменить группу: правый клик по вкладке. Название — до 24 символов.</div></div>';
+      if (!names.length) h += '<div class="empty">Групп пока нет. Правый клик по вкладке — и напиши название.</div>';
+      for (const name of names) {
+        h += '<div class="item"><span class="ic" style="background:' + groupColor(name) + ';color:#051018">●</span>' +
+             '<div class="body"><div class="l1">' + esc(name) + '</div><div class="l2">' + gm.get(name) + ' вкладок</div></div>' +
+             '<button class="pbtn" data-groupopen="' + esc(name) + '">Показать</button>' +
+             '<button class="del" data-grouprename="' + esc(name) + '" title="Переименовать">✎</button>' +
+             '<button class="del" data-groupclear="' + esc(name) + '" title="Снять метку">' + I.trash + '</button></div>';
+      }
+      h += '<div class="sform"><div class="note">Метки сохраняются в сессии, рабочих пространствах и наборах вкладок.</div></div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "sets") {
+      h += '<div class="phead"><span class="t">Наборы вкладок</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="bigstats"><div class="n">' + st.sets.length + '</div><div class="h">сохранённых наборов</div>' +
+           '<div class="note">Набор открывается поверх текущих вкладок: ORVYN добавит его вкладки и переключится на первую. Текущая сессия не пропадёт.</div></div>';
+      h += '<div class="sform"><div class="fline"><input id="setname" data-k="setname" spellcheck="false" placeholder="Название набора">' +
+           '<button class="pbtn primary" data-a="setSave">Сохранить текущие</button></div>' +
+           '<div class="note">Сохраняются все обычные вкладки, включая спящие, вместе с их группами.</div></div>';
+      if (!st.sets.length) h += '<div class="empty">Пока пусто. Сохрани текущие вкладки, чтобы вернуться к ним позже.</div>';
+      for (const s of st.sets) {
+        const prev = (s.titles || []).filter(Boolean).join(" · ");
+        h += '<div class="item"><span class="ic">' + I.star + '</span><div class="body"><div class="l1">' + esc(s.name) + '</div>' +
+             '<div class="l2">' + s.count + ' вкладок' + (prev ? ' · ' + esc(prev.slice(0, 70)) : '') + '</div></div>' +
+             '<button class="pbtn" data-setopen="' + esc(s.name) + '">Открыть</button>' +
+             '<button class="del" data-setrename="' + esc(s.name) + '" title="Переименовать">✎</button>' +
+             '<button class="del" data-setdelete="' + esc(s.name) + '" title="Удалить">' + I.trash + '</button></div>';
+      }
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "tabs") {
+      const counts = {};
+      for (const t of st.tabs) {
+        if (t.url && !t.incognito) counts[t.url] = (counts[t.url] || 0) + 1;
+      }
+      const dups = Object.keys(counts).filter((u) => counts[u] > 1).length;
+      h += '<div class="phead"><span class="t">Вкладки</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="sform"><div class="fline"><input id="tabq" data-k="tabq" spellcheck="false" placeholder="Поиск по названию или адресу"></div>' +
+           '<div class="note">Начни вводить — список отфильтруется. ' + (dups ? "Дублей: " + dups + ". " : "") + 'Можно переключаться и закрывать вкладки.</div></div>';
+      if (!st.tabs.length) h += '<div class="empty">Нет открытых вкладок.</div>';
+      for (const t of st.tabs) {
+        const dup = counts[t.url] > 1;
+        const sub = (hostOf(t.url) || "новая вкладка") +
+                    (t.group ? " · группа: " + t.group : "") +
+                    (t.sleeping ? " · спит" : "") + (t.muted ? " · без звука" : "") +
+                    (t.active ? " · активная" : "");
+        h += '<div class="item tabresult" data-tabid="' + t.id + '" data-search="' +
+             esc(((t.title || "") + " " + (t.url || "") + " " + (t.group || "")).toLowerCase()) + '">' +
+             '<span class="ic">' + (t.incognito ? I.mask : I.globe) + '</span>' +
+             '<div class="body"><div class="l1">' + esc(t.title || "Без названия") +
+             (dup ? ' <span class="badge">дубль</span>' : '') + '</div>' +
+             '<div class="l2">' + esc(sub) + '</div></div>' +
+             '<button class="del" data-tabgroup="' + t.id + '" title="Группа">' + I.star + '</button>' +
+             '<button class="del" data-tabdup="' + t.id + '" title="Дублировать">' + I.plus + '</button>' +
+             '<button class="del" data-tabclose="' + t.id + '" title="Закрыть">' + I.trash + '</button></div>';
+      }
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "backup") {
+      h += '<div class="phead"><span class="t">Резервная копия</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="bigstats"><div class="n">⇅</div><div class="h">закладки, настройки, история, вкладки, пространства и наборы</div>' +
+           '<div class="note">Копия — обычный JSON-файл. Экспорт выбирает только отмеченные пункты. При импорте можно заменить данные или добавить к текущим.</div></div>';
+      h += '<div class="sect">Что сохранять</div>';
+      h += '<div class="item" data-t="bkBookmarks"><span class="ic">' + I.star + '</span><div class="body"><div class="l1">Закладки</div><div class="l2">' + st.bookmarks.length + ' шт.</div></div>' + switchRow(st.bkBookmarks) + '</div>';
+      h += '<div class="item" data-t="bkSettings"><span class="ic">' + I.gear + '</span><div class="body"><div class="l1">Настройки</div><div class="l2">тема, поиск, защита, память</div></div>' + switchRow(st.bkSettings) + '</div>';
+      h += '<div class="item" data-t="bkHistory"><span class="ic">' + I.clock + '</span><div class="body"><div class="l1">История</div><div class="l2">' + st.history.length + ' записей в панели</div></div>' + switchRow(st.bkHistory) + '</div>';
+      h += '<div class="item" data-t="bkSession"><span class="ic">' + I.globe + '</span><div class="body"><div class="l1">Вкладки</div><div class="l2">текущая сессия</div></div>' + switchRow(st.bkSession) + '</div>';
+      h += '<div class="item" data-t="bkSpaces"><span class="ic">' + I.gear + '</span><div class="body"><div class="l1">Пространства</div><div class="l2">' + st.workspaces.length + ' наборов</div></div>' + switchRow(st.bkSpaces) + '</div>';
+      h += '<div class="item" data-t="bkSets"><span class="ic">' + I.star + '</span><div class="body"><div class="l1">Наборы вкладок</div><div class="l2">' + st.sets.length + ' сохранённых</div></div>' + switchRow(st.bkSets) + '</div>';
+      h += '<div class="sep"></div>';
+      h += '<div class="sect">Как восстанавливать</div>';
+      h += '<div class="item" data-t="bkReplace"><span class="ic">' + I.reset + '</span><div class="body"><div class="l1">Заменить данные</div><div class="l2">' + (st.bkReplace ? "старые данные будут заменены" : "добавить к текущим") + '</div></div>' + switchRow(st.bkReplace) + '</div>';
+      h += '<div class="sform"><div class="fline" style="flex-wrap:wrap">' +
+           '<button class="pbtn primary" data-a="backupExport">Экспортировать</button>' +
+           '<button class="pbtn" data-a="backupImport">Импортировать…</button></div>' +
+           '<div class="note">При замене вкладок текущие закроются и откроется сессия из копии. Настройки применяются сразу, часть изменений — после перезапуска.</div></div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "import") {
+      h += '<div class="phead"><span class="t">Импорт из браузеров</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="bigstats"><div class="n">⇩</div><div class="h">закладки, история и пароли</div>' +
+           '<div class="note">ORVYN читает данные локально и только добавляет их к твоим. В других браузерах ничего не меняется. Если браузер запущен и держит базу, закрой его и попробуй снова.</div></div>';
+      h += '<div class="sect">Найдено на этом ПК</div>';
+      if (!st.importBrowsers || !st.importBrowsers.length) {
+        h += '<div class="note">Профили не найдены. Если браузер установлен, запусти его хотя бы раз, чтобы он создал профиль.</div>';
+      } else {
+        for (const b of st.importBrowsers) {
+          const parts = [];
+          if (b.bookmarks) parts.push("закладки");
+          if (b.history) parts.push("история");
+          const path = b.profile.length > 72 ? "…" + b.profile.slice(-71) : b.profile;
+          h += '<div class="item"><span class="ic">' + I.down + '</span><div class="body"><div class="l1">' + esc(b.name) + '</div><div class="l2">' + esc(parts.join(" · ")) + ' · ' + esc(path) + '</div></div><button class="pbtn" data-import="' + esc(b.id) + '">Импортировать</button></div>';
+        }
+      }
+      h += '<div class="sect">Пароли</div>';
+      h += '<div class="sform"><div class="note">Chrome и Edge: chrome://password-manager/settings → «Экспорт паролей». Firefox: about:logins → «Экспорт». CSV не зашифрован — удали файл после импорта.</div>' +
+           '<div class="fline" style="flex-wrap:wrap"><button class="pbtn" data-a="importPasswords">Импортировать пароли из CSV…</button>' +
+           (st.vault ? '' : '<button class="pbtn" data-a="passwords">Открыть сейф</button>') + '</div>' +
+           '<div class="note">Пароли попадут в локальный зашифрованный сейф. Если сейф закрыт, сначала открой его мастер-паролем.</div></div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "custom") {
+      h += '<div class="phead"><span class="t">Оформление</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="sect">Основа</div>';
+      h += '<div class="sform"><div class="fline"><select data-set="theme" data-k="theme">' +
+           '<option value="dark"' + (st.theme === "dark" ? " selected" : "") + '>Тёмная тема</option>' +
+           '<option value="light"' + (st.theme === "light" ? " selected" : "") + '>Светлая тема</option></select></div>' +
+           '<div class="fline"><span class="note" style="flex:1 1 auto">Акцент</span>' +
+           '<input type="color" data-set="accent" data-k="accent" value="' + esc(st.accent) + '" style="width:44px;height:28px;flex:0 0 auto;padding:2px">' +
+           '<input type="color" data-set="accent2" data-k="accent2" value="' + esc(st.accent2) + '" style="width:44px;height:28px;flex:0 0 auto;padding:2px"></div>' +
+           '<div class="swatches">' +
+           ['#4fd1ff','#5be3a5','#ffd166','#ff8fd6','#ff6b81','#a97bff','#7ad7ff','#f0b45a'].map((c) => '<button class="swatch" data-accent="' + c + '" style="background:' + c + '" title="' + c + '"></button>').join("") +
+           '</div>' +
+           '<div class="fline"><span class="note" style="flex:1 1 auto">Форма вкладок</span><select data-set="tabShape" data-k="tabShape">' +
+           '<option value="rounded"' + (st.tabShape === "rounded" ? " selected" : "") + '>Скруглённые</option>' +
+           '<option value="pill"' + (st.tabShape === "pill" ? " selected" : "") + '>Овальные</option>' +
+           '<option value="square"' + (st.tabShape === "square" ? " selected" : "") + '>Прямые</option></select></div>' +
+           '<div class="fline"><span class="note" style="flex:1 1 auto">Радиус кнопок</span><input class="num" type="number" min="0" max="18" data-set="uiRadius" data-k="uiRadius" value="' + st.uiRadius + '"></div>' +
+           '<div class="fline"><span class="note" style="flex:1 1 auto">Шрифт</span><select data-set="uiFont" data-k="uiFont">' +
+           '<option value="segoe"' + (st.uiFont === "segoe" ? " selected" : "") + '>Segoe UI</option>' +
+           '<option value="system"' + (st.uiFont === "system" ? " selected" : "") + '>Системный</option>' +
+           '<option value="arial"' + (st.uiFont === "arial" ? " selected" : "") + '>Arial</option>' +
+           '<option value="georgia"' + (st.uiFont === "georgia" ? " selected" : "") + '>Georgia</option>' +
+           '<option value="consolas"' + (st.uiFont === "consolas" ? " selected" : "") + '>Consolas</option></select></div></div>';
+      h += '<div class="sect">Пресеты</div>';
+      h += '<div class="sform"><div class="fline" style="flex-wrap:wrap">' +
+           (st.themePresets || []).map((p) => '<button class="pbtn" data-preset="' + esc(p.id) + '">' + esc(p.name) + '</button>').join("") +
+           '</div><div class="note">Пресет применяется сразу. Понравился — сохрани его как профиль ниже.</div></div>';
+      h += '<div class="sect">Стекло и фон</div>';
+      h += '<div class="sform"><div class="fline"><span class="note" style="flex:1 1 auto">Прозрачность</span><select data-set="uiOpacity" data-k="uiOpacity">' +
+           [100,95,90,82,74].map((n) => '<option value="' + n + '"' + (st.uiOpacity === n ? " selected" : "") + '>' + n + '%</option>').join("") + '</select></div>' +
+           '<div class="fline"><span class="note" style="flex:1 1 auto">Размытие</span><select data-set="uiBlur" data-k="uiBlur">' +
+           [0,6,12,20].map((n) => '<option value="' + n + '"' + (st.uiBlur === n ? " selected" : "") + '>' + (n ? n + ' px' : 'нет') + '</option>').join("") + '</select></div>' +
+           '<div class="fline"><span class="note" style="flex:1 1 auto">Обои</span><select data-set="wallpaper" data-k="wallpaper">' +
+           '<option value="none"' + (st.wallpaper === "none" ? " selected" : "") + '>Без обоев</option>' +
+           '<option value="aurora"' + (st.wallpaper === "aurora" ? " selected" : "") + '>Аврора</option>' +
+           '<option value="grid"' + (st.wallpaper === "grid" ? " selected" : "") + '>Сетка</option>' +
+           '<option value="dots"' + (st.wallpaper === "dots" ? " selected" : "") + '>Точки</option>' +
+           '<option value="paper"' + (st.wallpaper === "paper" ? " selected" : "") + '>Бумага</option></select></div></div>';
+      h += '<div class="item" data-t="toolbarHidden"><span class="ic">' + I.gear + '</span><div class="body"><div class="l1">Прятать панель инструментов</div><div class="l2">вернуть — Ctrl+Shift+B</div></div>' + switchRow(st.toolbarHidden) + '</div>';
+      h += '<div class="item" data-t="panelLeft"><span class="ic">' + I.globe + '</span><div class="body"><div class="l1">Панель слева</div><div class="l2">щит, меню и настройки с левой стороны</div></div>' + switchRow(st.panelLeft) + '</div>';
+      h += '<div class="item" data-t="addressRow"><span class="ic">' + I.gear + '</span><div class="body"><div class="l1">Адресная строка отдельной строкой</div><div class="l2">кнопки сверху, адрес под ними</div></div>' + switchRow(st.addressRow) + '</div>';
+      h += '<div class="item" data-t="anim"><span class="ic">' + I.anim + '</span><div class="body"><div class="l1">Анимации</div><div class="l2">плавные переходы и появление панелей</div></div>' + switchRow(st.anim) + '</div>';
+      h += '<div class="sform"><div class="fline"><button class="pbtn" data-a="themeReset">Сбросить оформление</button></div></div>';
+      h += '<div class="sect">Профили оформления</div>';
+      h += '<div class="sform"><div class="fline"><input id="themename" data-k="themename" spellcheck="false" placeholder="Название профиля"><button class="pbtn" data-a="themeSave">Сохранить</button></div>' +
+           '<div class="note">Профиль хранит цвета, форму, шрифт, стекло и обои. Можно сделать отдельные виды для учёбы, работы и игр.</div></div>';
+      if (!st.themes.length) h += '<div class="empty">Профилей пока нет.</div>';
+      for (const t of st.themes) {
+        h += '<div class="item"><span class="ic" style="background:' + esc(t.accent) + '"></span><div class="body"><div class="l1">' + esc(t.name) + '</div>' +
+             '<div class="l2">' + esc(t.theme === "light" ? "светлая" : "тёмная") + ' · ' + esc(t.wallpaper) + '</div></div>' +
+             '<button class="pbtn" data-themeapply="' + esc(t.name) + '">Применить</button>' +
+             '<button class="del" data-themedel="' + esc(t.name) + '" title="Удалить">' + I.trash + '</button></div>';
+      }
+      h += '<div class="sect">Обмен</div>';
+      h += '<div class="sform"><div class="fline" style="flex-wrap:wrap">' +
+           '<button class="pbtn" data-a="themeExport">Файл</button>' +
+           '<button class="pbtn" data-a="themeImport">Импорт</button>' +
+           '<button class="pbtn" data-a="themeShare">Поделиться</button></div>' +
+           '<div class="note">«Поделиться» копирует JSON оформления в буфер обмена. Импорт понимает такой же файл.</div></div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "warp") {
+      const map = {
+        Connected: ["Подключён", "ok"], Disconnected: ["Отключён", "gray"],
+        Connecting: ["Подключается…", "amber"], Disconnecting: ["Отключается…", "amber"],
+        Missing: ["Не установлен", "red"], Error: ["Ошибка", "red"], Unknown: ["Неизвестно", "gray"]
+      };
+      const wm = map[st.warpStatus] || map.Unknown;
+      h += '<div class="phead"><span class="t">Cloudflare WARP</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="seccard"><div class="st"><span class="dot ' + (wm[1] === "ok" ? "" : wm[1]) + '"></span><div><div class="big">' + wm[0] + '</div>' +
+           '<div class="host">' + (st.warpStatus === "Connected" ? "в ORVYN: " + fmtDur(st.warpSince) : "warp-cli") + '</div></div></div>' +
+           (st.warpError ? '<div class="why">' + esc(st.warpError) + '</div>' : '') + '</div>';
+      if (!st.warpAvailable) {
+        h += '<div class="warnbox">Cloudflare WARP не найден. ORVYN не устанавливает его молча — сначала скачай официальное приложение Cloudflare и войди в нём.<div style="margin-top:7px"><button class="pbtn primary" data-a="warpInstall">Скачать WARP</button></div></div>';
+      } else {
+        h += '<div class="sform"><div class="fline" style="flex-wrap:wrap">';
+        if (st.warpStatus === "Connected") {
+          h += '<button class="pbtn danger" data-a="warpDisconnect" ' + (st.warpBusy ? "disabled" : "") + '>Отключить</button>';
+        } else {
+          h += '<button class="pbtn primary" data-a="warpConnect" ' + (st.warpBusy ? "disabled" : "") + '>Подключить</button>';
+        }
+        h += '<button class="pbtn" data-a="warpReconnect" ' + (st.warpBusy ? "disabled" : "") + '>Переподключить</button>' +
+             '<button class="pbtn" data-a="warpOpen">Настройки WARP</button>' +
+             '<button class="pbtn" data-a="warpCheck">Обновить</button></div></div>';
+      }
+      h += '<div class="item" data-t="warpAuto"><span class="ic">' + I.shield + '</span><div class="body"><div class="l1">Подключать при запуске ORVYN</div><div class="l2">только если ты сам включил этот пункт</div></div>' + switchRow(st.warpAuto) + '</div>';
+      h += '<div class="note" style="padding:2px 10px 12px">WARP — отдельное приложение Cloudflare. ORVYN управляет им через официальный warp-cli и не создаёт свой VPN. Режим WARP (прокси или туннель) задаётся в самом WARP и действует на уровне устройства.</div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "extensions") {
+      h += '<div class="phead"><span class="t">Расширения</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="bigstats"><div class="n">🧩</div><div class="h">Расширения и скрипты</div>' +
+           '<div class="note">Chrome-расширения WebView2 не поддерживает. Вместо них ORVYN использует встроенные модули и обычные userscripts — это те же скрипты для сайтов, только без магазина.</div></div>';
+      h += '<div class="sect">Уже встроено</div>';
+      h += '<div class="item"><span class="ic">' + I.shield + '</span><div class="body"><div class="l1">Реклама и трекеры</div><div class="l2">' + (st.protectionOn ? "включено · блокировка на всех сайтах" : "выключено в настройках") + '</div></div></div>';
+      h += '<div class="item"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">YouTube без рекламы</div><div class="l2">' + (st.protectionOn ? "включено · пропуск и скрытие рекламы" : "включится вместе с защитой") + '</div></div></div>';
+      h += '<div class="item"><span class="ic">' + I.lock + '</span><div class="body"><div class="l1">Защита сайтов</div><div class="l2">фишинг, переходы и опасные загрузки</div></div></div>';
+      h += '<div class="item"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">ORVYN AI</div><div class="l2">' + (st.aiOn ? "включён · быстрый бесплатный помощник" : "выключен в настройках") + '</div></div></div>';
+      h += '<div class="sect">Свои расширения</div>';
+      h += '<div class="sform"><div class="note">1. Открой каталог Greasy Fork и скачай нужный <b>.user.js</b>.<br>2. Нажми «Папка скриптов» и положи файл туда.<br>3. Перезапусти ORVYN — скрипт появится на своих сайтах.</div>' +
+           '<div class="fline" style="flex-wrap:wrap"><button class="pbtn primary" data-a="extGreasy">Скачать скрипты</button>' +
+           '<button class="pbtn" data-a="extFolder">Папка скриптов</button></div>' +
+           '<div class="note">Не ставь скрипты из непроверенных мест: они получают доступ к страницам.</div></div>';
+      h += '<div class="sect">Проверка YouTube</div>';
+      h += '<div class="sform"><div class="fline"><button class="pbtn" data-a="extYouTube">Открыть YouTube</button>' +
+           '<button class="pbtn" data-a="settings">Настройки защиты</button></div>' +
+           '<div class="note">Если реклама всё равно пробивается — выключи и включи защиту на этом сайте в щите. Скрипт пропускает рекламные вставки и скрывает баннеры.</div></div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "settings") {
+      const secChip = (id, name) => '<button class="pbtn schip' + (setSec === id ? " on" : "") + '" data-setchip="' + id + '">' + esc(name) + '</button>';
+      h += '<div class="phead"><span class="t">Настройки</span><span class="act" data-a="close">Готово</span></div>';
+      h += '<div class="sform"><div class="fline"><input id="setsearch" data-k="setsearch" spellcheck="false" placeholder="Найти настройку: вкладки, память, тема…"></div>' +
+           '<div class="fline" style="flex-wrap:wrap">' + secChip("all", "Все") +
+           (st.settingsSections || []).map((x) => secChip(x.id, x.name)).join("") + '</div>' +
+           '<div class="fline"><label class="sadv"><input type="checkbox" id="setadv"' + (setAdv ? " checked" : "") + '> Показывать расширенные настройки</label></div>' +
+           '<div class="fline" id="setresetrow" style="display:' + (setSec === "all" || setSec === "extra" ? "none" : "") + '"><button class="pbtn danger" data-a="resetSection">Сбросить раздел</button><span class="note" style="flex:1 1 auto">Остальные разделы не тронутся.</span></div>' +
+           '</div>';
+
+      h += '<div class="setsec" data-sec="search">';
+      h += '<div class="sect">Поиск</div>';
+      h += '<div class="sform"><div class="fline"><select data-set="searchEngine" data-k="searchEngine">' +
+           '<option value="ddg"' + (st.searchEngine === "ddg" ? " selected" : "") + '>DuckDuckGo</option>' +
+           '<option value="google"' + (st.searchEngine === "google" ? " selected" : "") + '>Google</option>' +
+           '<option value="own"' + (st.searchEngine === "own" ? " selected" : "") + '>ORVYN (своя выдача)</option>' +
+           '</select></div>' +
+           '<div class="note">DuckDuckGo включён по умолчанию. Можно выбрать Google или свою выдачу ORVYN.</div></div>';
+      h += '<div class="sect">Стартовая страница</div>';
+      h += '<div class="sform"><div class="fline"><input id="homeinput" data-k="homepage" spellcheck="false" placeholder="orvyn://newtab" value="' + esc(st.homepage) + '">' +
+           '<button class="pbtn" data-a="saveHome">Сохранить</button></div>' +
+           '<div class="note">Пусто — новая вкладка ORVYN. Можно указать любой адрес.</div></div>';
+      h += '</div>';
+
+      h += '<div class="setsec" data-sec="look">';
+      h += '<div class="sect">Внешний вид</div>';
+      h += '<div class="sform"><div class="fline"><select data-set="theme" data-k="theme">' +
+           '<option value="dark"' + (st.theme === "dark" ? " selected" : "") + '>Тёмная тема</option>' +
+           '<option value="light"' + (st.theme === "light" ? " selected" : "") + '>Светлая тема</option>' +
+           '</select></div></div>';
+      h += '<div class="item" data-t="snow"><span class="ic">' + I.snow + '</span><div class="body"><div class="l1">Снег</div><div class="l2">снежинки на новой вкладке</div></div>' + switchRow(st.snow) + '</div>';
+      h += '<div class="item" data-t="glow"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">Свечение</div><div class="l2">мягкие пятна и подсветка</div></div>' + switchRow(st.glow) + '</div>';
+      h += '<div class="item" data-t="anim"><span class="ic">' + I.anim + '</span><div class="body"><div class="l1">Анимации</div><div class="l2">плавные переходы</div></div>' + switchRow(st.anim) + '</div>';
+      h += '<div class="item" data-a="custom"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">Оформление</div><div class="l2">цвета, форма, шрифт, обои и профили</div></div></div>';
+      h += '</div>';
+
+      h += '<div class="setsec" data-sec="memory">';
+      h += '<div class="sect">Память и производительность</div>';
+      h += '<div class="item" data-t="memSaver"><span class="ic">' + I.chip + '</span><div class="body"><div class="l1">Memory Saver</div><div class="l2">выгружать неактивные вкладки</div></div>' + switchRow(st.memorySaver) + '</div>';
+      h += '<div class="sform" data-adv="1"><div class="fline"><span class="note" style="flex:1 1 auto">Простой до выгрузки, мин</span>' +
+           '<input class="num" data-set="idle" data-k="idle" inputmode="numeric" value="' + st.idleMinutes + '"></div>' +
+           '<div class="fline"><span class="note" style="flex:1 1 auto">Лимит памяти, МБ (0 — без лимита)</span>' +
+           '<input class="num" data-set="ramLimit" data-k="ramLimit" inputmode="numeric" value="' + st.ramLimit + '"></div></div>';
+      h += '<div class="item" data-a="monitor"><span class="ic">' + I.chip + '</span><div class="body"><div class="l1">Мониторинг RAM и CPU</div><div class="l2">' + Math.round(st.ram) + ' МБ · ' + n1(st.cpu) + '%</div></div></div>';
+      h += '<div class="item" data-t="restore"><span class="ic">' + I.clock + '</span><div class="body"><div class="l1">Восстановление сессии</div><div class="l2">открывать прошлые вкладки при запуске</div></div>' + switchRow(st.restoreSession) + '</div>';
+      h += '<div class="item" data-t="closeWarn"><span class="ic">' + I.info + '</span><div class="body"><div class="l1">Спрашивать при закрытии</div><div class="l2">если открыто несколько вкладок или идёт загрузка</div></div>' + switchRow(st.closeWarn) + '</div>';
+      h += '<div class="item" data-t="mouseGestures" data-adv="1"><span class="ic">' + I.globe + '</span><div class="body"><div class="l1">Жесты мышью</div><div class="l2">правой кнопкой: ← назад, → вперёд, ↑ вверх, ↓ вниз</div></div>' + switchRow(st.mouseGestures) + '</div>';
+      h += '<div class="item" data-t="hw" data-adv="1"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">Аппаратное ускорение</div><div class="l2">применяется после перезапуска</div></div>' + switchRow(st.hwAccel) + '</div>';
+      h += '<div class="item" data-t="bg" data-adv="1"><span class="ic">' + I.gear + '</span><div class="body"><div class="l1">Ограничивать фоновые процессы</div><div class="l2">после перезапуска</div></div>' + switchRow(st.bgLimit) + '</div>';
+      h += '</div>';
+
+      h += '<div class="setsec" data-sec="security">';
+      h += '<div class="sect">Безопасность ORVYN</div>';
+      h += '<div class="item" data-t="protection"><span class="ic">' + I.shield + '</span><div class="body"><div class="l1">Защита рекламы и трекеров</div><div class="l2">главный выключатель для всех сайтов</div></div>' + switchRow(st.protectionOn) + '</div>';
+      h += '<div class="item" data-t="redirectGuard"><span class="ic">' + I.eye + '</span><div class="body"><div class="l1">Подозрительные переходы</div><div class="l2">предупреждать о punycode, IP и скрытом адресе</div></div>' + switchRow(st.redirectGuard) + '</div>';
+      h += '<div class="item" data-t="dlGuard"><span class="ic">' + I.down + '</span><div class="body"><div class="l1">Опасные загрузки</div><div class="l2">придерживать исполняемые файлы до подтверждения</div></div>' + switchRow(st.downloadGuard) + '</div>';
+      h += '<div class="item" data-t="tabMetrics" data-adv="1"><span class="ic">' + I.chip + '</span><div class="body"><div class="l1">Память по вкладкам</div><div class="l2">оценка JS-памяти в мониторе</div></div>' + switchRow(st.tabMetrics) + '</div>';
+      h += '<div class="item" data-t="lazyTabs" data-adv="1"><span class="ic">' + I.clock + '</span><div class="body"><div class="l1">Отложенная загрузка фоновых вкладок</div><div class="l2">страница создаётся только при открытии</div></div>' + switchRow(st.lazyTabs) + '</div>';
+      h += '<div class="sform"><div class="fline" style="flex-wrap:wrap"><button class="pbtn" data-a="shield">Открыть щит</button></div>' +
+           '<div class="note">Правило для отдельного сайта — в щите на панели инструментов. Мастер-выключатель не отключает предупреждения об опасных сайтах.</div></div>';
+      h += '</div>';
+
+      h += '<div class="setsec" data-sec="privacy">';
+      h += '<div class="sect">Cookies и разрешения сайтов</div>';
+      h += '<div class="item" data-t="permNotif"><span class="ic">' + I.bell + '</span><div class="body"><div class="l1">Уведомления</div><div class="l2">разрешать сайтам</div></div>' + switchRow(st.permNotifications) + '</div>';
+      h += '<div class="item" data-t="permGeo"><span class="ic">' + I.globe + '</span><div class="body"><div class="l1">Геолокация</div><div class="l2">разрешать сайтам</div></div>' + switchRow(st.permGeolocation) + '</div>';
+      h += '<div class="item" data-t="permCam"><span class="ic">' + I.cam + '</span><div class="body"><div class="l1">Камера</div><div class="l2">разрешать сайтам</div></div>' + switchRow(st.permCamera) + '</div>';
+      h += '<div class="item" data-t="permMic"><span class="ic">' + I.mic + '</span><div class="body"><div class="l1">Микрофон</div><div class="l2">разрешать сайтам</div></div>' + switchRow(st.permMicrophone) + '</div>';
+      h += '<div class="sform"><div class="fline" style="flex-wrap:wrap">' +
+           '<button class="pbtn" data-a="clearHistory">История</button>' +
+           '<button class="pbtn" data-a="clearCache">Кэш</button>' +
+           '<button class="pbtn" data-a="clearCookies">Cookies</button>' +
+           '<button class="pbtn danger" data-a="clearAll">Всё сразу</button></div>' +
+           '<div class="note">Очистка действует на весь профиль. Открытые сайты могут потребовать повторный вход.</div></div>';
+      h += '<div class="item" data-a="clean"><span class="ic">' + I.trash + '</span><div class="body"><div class="l1">Чистка и автоочистка</div><div class="l2">' + (st.autoClean ? "включена, раз в " + st.autoCleanDays + " дн." : "кэш, cookies, история, место сайтов") + '</div></div></div>';
+      h += '<div class="item" data-a="backup"><span class="ic">' + I.reset + '</span><div class="body"><div class="l1">Резервная копия</div><div class="l2">сохранить или восстановить данные</div></div></div>';
+      h += '<div class="item" data-a="import"><span class="ic">' + I.down + '</span><div class="body"><div class="l1">Импорт из браузеров</div><div class="l2">закладки, история и пароли из Chrome, Edge, Firefox</div></div></div>';
+      h += '</div>';
+
+      h += '<div class="setsec" data-sec="ai">';
+      h += '<div class="sect">ORVYN AI</div>';
+      h += '<div class="item" data-t="aiOn"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">ORVYN AI включён</div><div class="l2">бесплатный облачный помощник без ключей</div></div>' + switchRow(st.aiOn) + '</div>';
+      h += '<div class="item" data-t="aiSave" data-adv="1"><span class="ic">' + I.clock + '</span><div class="body"><div class="l1">Сохранять историю AI</div><div class="l2">в store.json на этом ПК</div></div>' + switchRow(st.aiSave) + '</div>';
+      h += '</div>';
+
+      h += '<div class="setsec" data-sec="sites">';
+      h += '<div class="sect">Сайты и система</div>';
+      h += '<div class="item" data-a="warp"><span class="ic">' + I.shield + '</span><div class="body"><div class="l1">Cloudflare WARP</div><div class="l2">' + (st.warpStatus === "Connected" ? "подключён" : (st.warpAvailable ? "отключён" : "не установлен")) + '</div></div></div>';
+      h += '<div class="item" data-a="passwords"><span class="ic">' + I.lock + '</span><div class="body"><div class="l1">Пароли</div><div class="l2">' + (st.vault ? st.vault.count + ' записей · сейф открыт' : (st.vaultExists ? 'сейф закрыт' : 'создать локальный сейф')) + '</div></div></div>';
+      h += '<div class="item" data-a="extensions"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">Расширения и скрипты</div><div class="l2">userscripts, YouTube-антиреклама, папка установки</div></div></div>';
+      h += '<div class="item" data-a="devtools" data-adv="1"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">DevTools</div><div class="l2">Ctrl+Shift+I</div></div></div>';
+      h += '<div class="item" data-a="about"><span class="ic">' + I.info + '</span><div class="body"><div class="l1">О браузере</div></div></div>';
+      h += '</div>';
+
+      h += '<div class="setsec" data-sec="extra">';
+      h += '<div class="sect">Разработчики</div>';
+      h += '<div class="devcard">' +
+           '<div class="dtitle">ORVYN — команда разработчиков</div>' +
+           '<div class="drow"><span class="drole">Автор идеи</span><span class="dname">Ваня (Собака)</span></div>' +
+           '<div class="drow"><span class="drole">Оригинальный разработчик</span><span class="dname">Федотка Ориг</span></div>' +
+           '<div class="drow"><span class="drole">Кодирование</span><span class="dname">DeepSeek</span></div>' +
+           '<div class="drow"><span class="drole">Инструмент разработки</span><span class="dname">OpenCode</span></div>' +
+           '<div class="drow"><span class="drole">Промпты</span><span class="dname">ChatGPT</span></div>' +
+           '<div class="dcopy">© 2026 ORVYN. Все права (не)защищены.</div>' +
+           '</div>';
+      h += '<div class="sform"><div class="fline"><button class="pbtn danger" data-a="reset">Сбросить все настройки</button></div>' +
+           '<div class="note">История и закладки останутся.</div></div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+      h += '</div>';
+    }
+
+    if (st.panel === "shield") {
+      const sec = st.security || {};
+      const dot = sec.level === "ok" ? "" : (sec.level === "http" ? "amber" : (sec.level === "warn" ? "red" : "gray"));
+      h += '<div class="phead"><span class="t">Безопасность</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="seccard">' +
+           '<div class="st"><span class="dot ' + dot + '"></span><div><div class="big">' + esc(sec.label || "") + '</div>' +
+           '<div class="host">' + esc(sec.host || (sec.internal ? "внутренняя страница" : "")) + '</div></div></div>' +
+           (sec.warning ? '<div class="why">' + esc(sec.warning) + '</div>' : '') +
+           '</div>';
+      h += '<div class="secrow"><span>На этом сайте</span><span class="sp"></span><b>' + (st.siteBlocked || 0) + '</b><span>заблокировано</span></div>';
+      h += '<div class="secrow"><span>За сеанс всего</span><span class="sp"></span><b>' + st.blocked + '</b><span>рекламы и трекеров</span></div>';
+      if (st.topBlocked && st.topBlocked.length) {
+        h += '<div class="sect">Кого режем чаще всего</div>';
+        for (const t of st.topBlocked) {
+          h += '<div class="trk"><span class="h">' + esc(t.host) + '</span><span class="n">' + t.n + '</span></div>';
+        }
+      }
+      h += '<div class="sep"></div>';
+      h += '<div class="item" data-t="protection"><span class="ic">' + I.shield + '</span><div class="body"><div class="l1">Защита рекламы и трекеров</div><div class="l2">главный выключатель</div></div>' + switchRow(st.protectionOn) + '</div>';
+      if (!sec.internal && st.protectionOn) {
+        h += '<div class="item" data-a="siteProtect"><span class="ic">' + (sec.protected ? I.shield : I.globe) + '</span><div class="body"><div class="l1">Защита на этом сайте</div><div class="l2">' + (sec.protected ? "включена — нажми, чтобы выключить" : "выключена — нажми, чтобы включить") + '</div></div>' + switchRow(sec.protected) + '</div>';
+      }
+      if (!sec.internal) {
+        const pm = sec.perms || {};
+        h += '<div class="sect">Разрешения сайта</div>';
+        h += '<div class="item" data-perm="notif"><span class="ic">' + I.bell + '</span><div class="body"><div class="l1">Уведомления</div><div class="l2">только для этого сайта</div></div>' + switchRow(pm.notif) + '</div>';
+        h += '<div class="item" data-perm="geo"><span class="ic">' + I.globe + '</span><div class="body"><div class="l1">Геолокация</div><div class="l2">только для этого сайта</div></div>' + switchRow(pm.geo) + '</div>';
+        h += '<div class="item" data-perm="cam"><span class="ic">' + I.cam + '</span><div class="body"><div class="l1">Камера</div><div class="l2">только для этого сайта</div></div>' + switchRow(pm.cam) + '</div>';
+        h += '<div class="item" data-perm="mic"><span class="ic">' + I.mic + '</span><div class="body"><div class="l1">Микрофон</div><div class="l2">только для этого сайта</div></div>' + switchRow(pm.mic) + '</div>';
+      }
+      h += '<div class="item" data-t="redirectGuard"><span class="ic">' + I.eye + '</span><div class="body"><div class="l1">Подозрительные переходы</div><div class="l2">punycode, IP вместо домена, скрытый адрес</div></div>' + switchRow(st.redirectGuard) + '</div>';
+      h += '<div class="item" data-t="dlGuard"><span class="ic">' + I.down + '</span><div class="body"><div class="l1">Опасные загрузки</div><div class="l2">придерживать .exe, .msi, .bat и подобные</div></div>' + switchRow(st.downloadGuard) + '</div>';
+      h += '<div class="sform"><div class="fline" style="flex-wrap:wrap">' +
+           '<button class="pbtn" data-a="checkSite">Проверить сайт</button>' +
+           (sec.internal ? "" : '<button class="pbtn danger" data-a="clearSite">Удалить данные сайта</button>') +
+           '<button class="pbtn" data-a="settings">Настройки</button></div>' +
+           '<div class="note">Проверка локальная: HTTPS, список угроз, правила сайта и счётчик. Данные сайта — cookies, localStorage, IndexedDB и кэш этого сайта.</div></div>';
+      if (st.status) h += '<div class="pstat ok">' + esc(st.status) + '</div>';
+    }
+
+    if (st.panel === "bookmarks") {
+      h += '<div class="phead"><span class="t">Закладки</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="sform"><div class="fline"><input id="bmq" data-k="bmq" spellcheck="false" placeholder="Поиск по названию или адресу"></div></div>';
+      if (!st.bookmarks.length) h += '<div class="empty">Пока пусто. Жми ★ в адресной строке.</div>';
+      for (const b of st.bookmarks) {
+        h += '<div class="item" data-url="' + esc(b.url) + '" data-search="' + esc(((b.title || "") + " " + b.url).toLowerCase()) + '"><span class="ic">' + I.globe + '</span>' +
+             '<div class="body"><div class="l1">' + esc(b.title || b.url) + '</div><div class="l2">' + esc(b.url) + '</div></div>' +
+             '<button class="del" data-del="' + esc(b.url) + '" title="Удалить">' + I.trash + '</button></div>';
+      }
+    }
+
+    if (st.panel === "history") {
+      h += '<div class="phead"><span class="t">История</span><span class="act" data-a="clearHistory">Очистить</span></div>';
+      h += '<div class="sform"><div class="fline"><input id="histq" data-k="histq" spellcheck="false" placeholder="Поиск по истории"></div></div>';
+      if (!st.history.length) h += '<div class="empty">История пуста.</div>';
+      for (const e of st.history.slice().reverse()) {
+        h += '<div class="item" data-url="' + esc(e.url) + '" data-search="' + esc(((e.title || "") + " " + e.url).toLowerCase()) + '"><span class="ic">' + I.clock + '</span>' +
+             '<div class="body"><div class="l1">' + esc(e.title || e.url) + '</div>' +
+             '<div class="l2">' + esc(hostOf(e.url)) + ' · ' + fmtTime(e.ts) + '</div></div></div>';
+      }
+    }
+
+    if (st.panel === "close") {
+      h += '<div class="phead"><span class="t">Закрыть ORVYN?</span><span class="act" data-a="close">Отмена</span></div>';
+      h += '<div class="bigstats"><div class="n">' + st.tabs.length + '</div><div class="h">открытых вкладок · загрузок в работе: ' + st.dlActive + '</div>' +
+           '<div class="note">При следующем запуске вкладки восстановятся, если включено восстановление сессии. Активные загрузки могут прерваться.</div></div>';
+      h += '<div class="sform"><div class="fline" style="flex-wrap:wrap">' +
+           '<button class="pbtn danger" data-a="quit">Всё равно закрыть</button>' +
+           '<button class="pbtn primary" data-a="close">Остаться</button></div></div>';
+    }
+
+    if (st.panel === "recovered") {
+      h += '<div class="phead"><span class="t">ВОССТАНОВЛЕНИЕ СЕССИИ</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="bigstats"><div class="n">' + st.recovery + '</div><div class="h">вкладок восстановлено после сбоя</div>' +
+           '<div class="note">Прошлый запуск завершился аварийно: ORVYN не закрылся штатно. Вкладки взяты из последнего снимка сессии, который сохраняется каждые 20 секунд.</div></div>';
+      h += '<div class="sform"><div class="note">Если это повторяется, посмотри лог: <b>%APPDATA%\\Orvyn\\logs\\orvyn.log</b>. Там время, версия и текст ошибки. Пароли и содержимое страниц в лог не пишутся.</div>' +
+           '<div class="fline"><button class="pbtn primary" data-a="close">Понятно</button></div></div>';
+    }
+
+    if (st.panel === "qr") {
+      h += '<div class="phead"><span class="t">QR-код страницы</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="qrbox">' + (st.qrSvg || "") + '</div>';
+      h += '<div class="qrurl">' + esc(st.qrUrl || "") + '</div>';
+      h += '<div class="note" style="padding:0 12px 12px">Код создан локально в ORVYN, адрес никуда не отправляется. Наведи камеру телефона, чтобы открыть страницу.</div>';
+    }
+
+    if (st.panel === "about") {
+      h += '<div class="phead"><span class="t">О браузере</span><span class="act" data-a="close">Закрыть</span></div>';
+      h += '<div class="about"><b>ORVYN 2.2</b> — лёгкий браузер на Rust.<br>' +
+           'Оболочка, вкладки и вся логика — Rust (tao + wry), движок — WebView2 (Chromium).<br>' +
+           'Без Electron и лишних фоновых процессов.<br>' +
+           'Поиск: DuckDuckGo по умолчанию, Google и своя выдача ORVYN — на выбор.<br>' +
+           'Защита от рекламы, трекеров, опасных сайтов и загрузок; правила по сайтам.<br>' +
+           'Memory Saver, лимит RAM, мониторинг и отложенная загрузка вкладок.<br>' +
+           'Группы и наборы вкладок, рабочие пространства, резервные копии.<br>' +
+           'Оформление: цвета, шрифты, стекло, обои и профили. WARP и пароли — локально.<br><br>' +
+           '<span class="k">Ctrl+T</span> новая · <span class="k">Ctrl+Shift+N</span> инкогнито · ' +
+           '<span class="k">Ctrl+Shift+T</span> вернуть · <span class="k">Ctrl+W</span> закрыть · ' +
+           '<span class="k">Ctrl+L</span> адрес · <span class="k">Ctrl+D</span> закладка · ' +
+           '<span class="k">Ctrl+Shift+L</span> пароль · <span class="k">Ctrl+Tab</span> переключение · ' +
+           '<span class="k">Ctrl+Shift+I</span> DevTools</div>';
+    }
+
+    p.innerHTML = h;
+    restoreInputs(snap);
+
+    p.querySelectorAll("[data-a]").forEach((el) => {
+      el.onclick = () => {
+        const a = el.getAttribute("data-a");
+        if (a === "new") ipc({ cmd: "newTab" });
+        else if (a === "incognito") ipc({ cmd: "newIncognito" });
+        else if (a === "reopen") ipc({ cmd: "reopenTab" });
+        else if (a === "bookmarks") ipc({ cmd: "panel", name: "bookmarks" });
+        else if (a === "history") ipc({ cmd: "panel", name: "history" });
+        else if (a === "music") ipc({ cmd: "panel", name: "music" });
+        else if (a === "settings") ipc({ cmd: "panel", name: "settings" });
+        else if (a === "downloads") ipc({ cmd: "panel", name: "downloads" });
+        else if (a === "tabs") ipc({ cmd: "panel", name: "tabs" });
+        else if (a === "spaces") ipc({ cmd: "panel", name: "spaces" });
+        else if (a === "groups") ipc({ cmd: "panel", name: "groups" });
+        else if (a === "sets") ipc({ cmd: "panel", name: "sets" });
+        else if (a === "backup") ipc({ cmd: "panel", name: "backup" });
+        else if (a === "import") ipc({ cmd: "panel", name: "import" });
+        else if (a === "importPasswords") ipc({ cmd: "importPasswords" });
+        else if (a === "custom") ipc({ cmd: "panel", name: "custom" });
+        else if (a === "warp") ipc({ cmd: "panel", name: "warp" });
+        else if (a === "warpConnect") ipc({ cmd: "warp", action: "connect" });
+        else if (a === "warpDisconnect") ipc({ cmd: "warp", action: "disconnect" });
+        else if (a === "warpReconnect") ipc({ cmd: "warp", action: "reconnect" });
+        else if (a === "warpCheck") ipc({ cmd: "warpCheck" });
+        else if (a === "warpOpen") ipc({ cmd: "warpOpen" });
+        else if (a === "warpInstall") ipc({ cmd: "warpInstall" });
+        else if (a === "passwords") ipc({ cmd: "panel", name: "passwords" });
+        else if (a === "ai") ipc({ cmd: "panel", name: "ai" });
+        else if (a === "aiSend") {
+          const ta = $("aiq");
+          const text = ta ? ta.value : "";
+          if (text.trim() && !st.aiBusy) {
+            ipc({ cmd: "aiSend", text: text });
+            ta.value = "";
+          }
+        }
+        else if (a === "aiContext") ipc({ cmd: "aiContext" });
+        else if (a === "aiClear") {
+          if (confirm("Очистить историю ORVYN AI?")) ipc({ cmd: "aiClear" });
+        }
+        else if (a === "aiClearContext") ipc({ cmd: "aiClearContext" });
+        else if (a === "vaultCreate") ipc({ cmd: "vaultCreate", password: ($("pvmaster") || {}).value || "", repeat: ($("pvrepeat") || {}).value || "" });
+        else if (a === "vaultUnlock") ipc({ cmd: "vaultUnlock", password: ($("pvmaster") || {}).value || "" });
+        else if (a === "vaultLock") ipc({ cmd: "vaultLock" });
+        else if (a === "vaultSave") ipc({
+          cmd: "vaultSave",
+          id: Number(($("pvid") || {}).value || 0),
+          origin: ($("pvorigin") || {}).value || "",
+          title: ($("pvtitle") || {}).value || "",
+          username: ($("pvuser") || {}).value || "",
+          password: ($("pvpassword") || {}).value || ""
+        });
+        else if (a === "vaultGen") {
+          const len = Number(($("pvlen") || {}).value || 20);
+          const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*-_=+";
+          const buf = new Uint32Array(len);
+          crypto.getRandomValues(buf);
+          let s = "";
+          for (let i = 0; i < len; i++) s += chars[buf[i] % chars.length];
+          const f = $("pvpassword");
+          if (f) { f.value = s; f.type = "text"; f.focus(); f.select(); }
+        }
+        else if (a === "vaultNew") {
+          for (const [id, val] of [["pvid", ""], ["pvtitle", ""], ["pvuser", ""], ["pvpassword", ""], ["pvorigin", st.vaultOrigin || ""]]) {
+            const f = $(id);
+            if (f) { f.value = val; if (id === "pvpassword") f.type = "password"; }
+          }
+          const f = $("pvorigin");
+          if (f) f.focus();
+        }
+        else if (a === "vaultExport") ipc({ cmd: "vaultExport" });
+        else if (a === "vaultImport") ipc({ cmd: "vaultImport" });
+        else if (a === "vaultReset") {
+          if (confirm("Удалить сейф со всеми паролями? Это необратимо.")) ipc({ cmd: "vaultReset" });
+        }
+        else if (a === "backupExport") ipc({ cmd: "backupExport" });
+        else if (a === "backupImport") ipc({ cmd: "backupImport" });
+        else if (a === "themeReset") ipc({ cmd: "themeReset" });
+        else if (a === "themeExport") ipc({ cmd: "themeExport" });
+        else if (a === "themeImport") ipc({ cmd: "themeImport" });
+        else if (a === "themeShare") copyPlain(st.themeJson || "");
+        else if (a === "themeSave") ipc({ cmd: "themeSave", name: ($("themename") || {}).value || "" });
+        else if (a === "spaceSave") ipc({ cmd: "spaceSave" });
+        else if (a === "setSave") ipc({ cmd: "setSave", name: ($("setname") || {}).value || "" });
+        else if (a === "spaceNew") {
+          const name = ($("spacename") || {}).value || "";
+          const icon = ($("spaceicon") || {}).value || "star";
+          ipc({ cmd: "spaceNew", name: name, icon: icon });
+        }
+        else if (a === "dup") ipc({ cmd: "dupTab", id: currentId() });
+        else if (a === "pin") ipc({ cmd: "pinTab", id: currentId() });
+        else if (a === "closeTab") ipc({ cmd: "closeTab", id: currentId() });
+        else if (a === "extensions") ipc({ cmd: "panel", name: "extensions" });
+        else if (a === "extFolder") ipc({ cmd: "userscripts" });
+        else if (a === "extGreasy") ipc({ cmd: "newTab", url: "https://greasyfork.org/ru/scripts" });
+        else if (a === "extYouTube") ipc({ cmd: "newTab", url: "https://www.youtube.com/" });
+        else if (a === "find") ipc({ cmd: "findInPage" });
+        else if (a === "mute") ipc({ cmd: "muteTab", id: currentId() });
+        else if (a === "copySel") ipc({ cmd: "copySelection" });
+        else if (a === "reader") ipc({ cmd: "reader" });
+        else if (a === "translate") ipc({ cmd: "panel", name: "translate" });
+        else if (a === "translateGo") {
+          const custom = (($("trcustom") || {}).value || "").trim();
+          const lang = custom || ($("trlang") || {}).value || st.translateLang || "ru";
+          ipc({ cmd: "translate", lang: lang });
+        }
+        else if (a === "copyLinks") ipc({ cmd: "copyLinks" });
+        else if (a === "screenshot") ipc({ cmd: "screenshot" });
+        else if (a === "savePage") ipc({ cmd: "savePage" });
+        else if (a === "qr") ipc({ cmd: "qr" });
+        else if (a === "monitor") ipc({ cmd: "panel", name: "monitor" });
+        else if (a === "clean") ipc({ cmd: "panel", name: "clean" });
+        else if (a === "cleanNow") ipc({ cmd: "cleanNow" });
+        else if (a === "cleanUsage") ipc({ cmd: "cleanUsage" });
+        else if (a === "devtools") ipc({ cmd: "devtools" });
+        else if (a === "userscripts") ipc({ cmd: "userscripts" });
+        else if (a === "about") ipc({ cmd: "panel", name: "about" });
+        else if (a === "shield") ipc({ cmd: "panel", name: "shield" });
+        else if (a === "siteProtect") ipc({ cmd: "siteProtect" });
+        else if (a === "checkSite") ipc({ cmd: "checkSite" });
+        else if (a === "discardIdle") ipc({ cmd: "discardIdle" });
+        else if (a === "clearSite") { if (confirm("Удалить cookies, localStorage, IndexedDB и кэш этого сайта? История по нему тоже очистится.")) ipc({ cmd: "clearSite" }); }
+        else if (a === "close") ipc({ cmd: "panel", name: "" });
+        else if (a === "quit") ipc({ cmd: "quit" });
+        else if (a === "winMin") ipc({ cmd: "windowMin" });
+        else if (a === "winMax") ipc({ cmd: "windowMax" });
+        else if (a === "winClose") ipc({ cmd: "windowClose" });
+        else if (a === "clearHistory") ipc({ cmd: "clear", what: "history" });
+        else if (a === "clearCache") ipc({ cmd: "clear", what: "cache" });
+        else if (a === "clearCookies") ipc({ cmd: "clear", what: "cookies" });
+        else if (a === "clearAll") { if (confirm("Очистить историю, кэш и cookies?")) ipc({ cmd: "clear", what: "all" }); }
+        else if (a === "clearDl") { for (const d of st.downloads) if (d.state !== "progress" && d.state !== "paused") ipc({ cmd: "download", action: "clear", id: d.id }); }
+        else if (a === "dlFolder") ipc({ cmd: "dlFolder" });
+        else if (a === "reset") { if (confirm("Сбросить все настройки?")) ipc({ cmd: "reset" }); }
+        else if (a === "resetSection") {
+          const row = $("setresetrow");
+          const name = (st.settingsSections || []).find((x) => x.id === setSec);
+          if (confirm("Сбросить раздел «" + (name ? name.name : setSec) + "»? Остальные настройки останутся.")) {
+            ipc({ cmd: "resetSection", section: setSec });
+            if (row) row.style.display = "none";
+            setSec = "all";
+          }
+        }
+        else if (a === "saveHome") ipc({ cmd: "set", key: "homepage", value: ($("homeinput") || {}).value || "" });
+        else if (a === "proxyOn" || a === "proxyOff" || a === "proxyTest") {
+          const form = proxyForm();
+          ipc({
+            cmd: a === "proxyTest" ? "proxyTest" : "proxy",
+            kind: form.kind, host: form.host, port: form.port,
+            on: a === "proxyOn" ? true : (a === "proxyOff" ? false : undefined)
+          });
+        }
+      };
+    });
+    p.querySelectorAll("[data-import]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "importRun", id: el.getAttribute("data-import") });
+    });
+    p.querySelectorAll("[data-music]").forEach((el) => {
+      el.onclick = () => {
+        ipc({ cmd: "newTab", url: el.getAttribute("data-music") });
+        ipc({ cmd: "panel", name: "" });
+      };
+    });
+    p.querySelectorAll("[data-t]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "toggle", name: el.getAttribute("data-t") });
+    });
+    const tq = p.querySelector("#tabq");
+    if (tq) {
+      tq.oninput = () => {
+        const v = tq.value.trim().toLowerCase();
+        p.querySelectorAll("[data-tabid]").forEach((el) => {
+          el.style.display = (el.getAttribute("data-search") || "").includes(v) ? "" : "none";
+        });
+      };
+    }
+    for (const qid of ["bmq", "histq"]) {
+      const q = p.querySelector("#" + qid);
+      if (q) q.oninput = () => {
+        const v = q.value.trim().toLowerCase();
+        p.querySelectorAll(".item[data-search]").forEach((el) => {
+          el.style.display = (el.getAttribute("data-search") || "").includes(v) ? "" : "none";
+        });
+      };
+    }
+    p.querySelectorAll("[data-tabid]").forEach((el) => {
+      el.onclick = (e) => {
+        if (e.target.closest("[data-tabclose]") || e.target.closest("[data-tabgroup]")) return;
+        ipc({ cmd: "selectTab", id: Number(el.getAttribute("data-tabid")) });
+        ipc({ cmd: "panel", name: "" });
+      };
+    });
+    p.querySelectorAll("[data-tabclose]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        ipc({ cmd: "closeTab", id: Number(el.getAttribute("data-tabclose")) });
+      };
+    });
+    p.querySelectorAll("[data-tabgroup]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        const id = Number(el.getAttribute("data-tabgroup"));
+        const t = st.tabs.find((x) => x.id === id);
+        const name = prompt("Группа вкладки (пусто — убрать метку)", (t && t.group) || "");
+        if (name !== null) ipc({ cmd: "tabGroup", id: id, name: name });
+      };
+    });
+    p.querySelectorAll("[data-tabdup]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        ipc({ cmd: "dupTab", id: Number(el.getAttribute("data-tabdup")) });
+      };
+    });
+    p.querySelectorAll("[data-accent]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "set", key: "accent", value: el.getAttribute("data-accent") });
+    });
+    p.querySelectorAll("[data-themeapply]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "themeApply", name: el.getAttribute("data-themeapply") });
+    });
+    p.querySelectorAll("[data-preset]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "themePreset", id: el.getAttribute("data-preset") });
+    });
+    p.querySelectorAll("[data-themedel]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "themeDelete", name: el.getAttribute("data-themedel") });
+    });
+    p.querySelectorAll("[data-groupopen]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "groupFocus", name: el.getAttribute("data-groupopen") });
+    });
+    p.querySelectorAll("[data-grouprename]").forEach((el) => {
+      el.onclick = () => {
+        const old = el.getAttribute("data-grouprename");
+        const name = prompt("Новое название группы", old);
+        if (name !== null) ipc({ cmd: "groupRename", old: old, name: name });
+      };
+    });
+    p.querySelectorAll("[data-groupclear]").forEach((el) => {
+      el.onclick = () => {
+        const name = el.getAttribute("data-groupclear");
+        if (confirm("Снять метку группы «" + name + "» со всех вкладок?")) ipc({ cmd: "groupClear", name: name });
+      };
+    });
+    p.querySelectorAll("[data-setopen]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "setOpen", name: el.getAttribute("data-setopen") });
+    });
+    p.querySelectorAll("[data-setrename]").forEach((el) => {
+      el.onclick = () => {
+        const old = el.getAttribute("data-setrename");
+        const name = prompt("Новое название набора", old);
+        if (name !== null) ipc({ cmd: "setRename", old: old, name: name });
+      };
+    });
+    p.querySelectorAll("[data-setdelete]").forEach((el) => {
+      el.onclick = () => {
+        const name = el.getAttribute("data-setdelete");
+        if (confirm("Удалить набор «" + name + "»? Вкладки останутся открытыми.")) ipc({ cmd: "setDelete", name: name });
+      };
+    });
+    p.querySelectorAll("[data-trquick]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "translate", lang: el.getAttribute("data-trquick") });
+    });
+    p.querySelectorAll("[data-aicopy]").forEach((el) => {
+      el.onclick = () => {
+        const m = st.aiMessages[Number(el.getAttribute("data-aicopy"))];
+        if (m) copyPlain(m.content);
+      };
+    });
+    p.querySelectorAll("[data-vaultfill]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "vaultFill", id: Number(el.getAttribute("data-vaultfill")) });
+    });
+    p.querySelectorAll("[data-vaultcopy]").forEach((el) => {
+      el.onclick = () => copyPlain(el.getAttribute("data-vaultcopy") || "");
+    });
+    p.querySelectorAll("[data-vaultshow]").forEach((el) => {
+      el.onclick = () => {
+        const span = el.parentElement && el.parentElement.querySelector(".pwval");
+        if (!span) return;
+        const shown = span.textContent !== "••••••••";
+        span.textContent = shown ? "••••••••" : (span.getAttribute("data-secret") || "");
+        el.textContent = shown ? "показать" : "скрыть";
+      };
+    });
+    p.querySelectorAll("[data-vaultedit]").forEach((el) => {
+      el.onclick = () => {
+        if (!st.vault) return;
+        const e = st.vault.entries.find((x) => x.id === Number(el.getAttribute("data-vaultedit")));
+        if (!e) return;
+        const set = (id, val) => { const f = $(id); if (f) f.value = val; };
+        set("pvid", String(e.id));
+        set("pvorigin", e.origin || "");
+        set("pvtitle", e.title || "");
+        set("pvuser", e.username || "");
+        set("pvpassword", e.password || "");
+        const f = $("pvpassword");
+        if (f) f.type = "text";
+        const g = $("pvorigin");
+        if (g) { g.focus(); try { g.scrollIntoView({ block: "center" }); } catch (err) {} }
+      };
+    });
+    p.querySelectorAll("[data-vaultdel]").forEach((el) => {
+      el.onclick = () => {
+        if (confirm("Удалить эту запись пароля?")) ipc({ cmd: "vaultDelete", id: Number(el.getAttribute("data-vaultdel")) });
+      };
+    });
+    p.querySelectorAll("[data-space]").forEach((el) => {
+      const id = Number(el.getAttribute("data-space"));
+      el.onclick = (e) => {
+        if (e.target.closest("[data-spaceren]") || e.target.closest("[data-spaceicon]") || e.target.closest("[data-spacedel]")) return;
+        ipc({ cmd: "spaceOpen", id: id });
+      };
+      const ren = el.querySelector("[data-spaceren]");
+      if (ren) ren.onclick = (e) => {
+        e.stopPropagation();
+        const name = prompt("Название пространства", el.getAttribute("data-spacename") || "");
+        if (name !== null) ipc({ cmd: "spaceRename", id: id, name: name });
+      };
+      const ico = el.querySelector("[data-spaceicon]");
+      if (ico) ico.onclick = (e) => { e.stopPropagation(); ipc({ cmd: "spaceIcon", id: id }); };
+      const del = el.querySelector("[data-spacedel]");
+      if (del) del.onclick = (e) => {
+        e.stopPropagation();
+        if (confirm("Удалить пространство? Открытые вкладки останутся.")) ipc({ cmd: "spaceDelete", id: id });
+      };
+    });
+    p.querySelectorAll("[data-zoom]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "zoom", delta: parseFloat(el.getAttribute("data-zoom")) });
+    });
+    p.querySelectorAll("[data-url]").forEach((el) => {
+      el.onclick = (e) => {
+        if (e.target.closest("[data-del]")) return;
+        ipc({ cmd: "navigate", text: el.getAttribute("data-url") });
+        ipc({ cmd: "panel", name: "" });
+      };
+    });
+    p.querySelectorAll("[data-del]").forEach((el) => {
+      el.onclick = (e) => { e.stopPropagation(); ipc({ cmd: "delBookmark", url: el.getAttribute("data-del") }); };
+    });
+    p.querySelectorAll("[data-dl]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "download", action: el.getAttribute("data-dl"), id: Number(el.getAttribute("data-id")) });
+    });
+    p.querySelectorAll("[data-copydl]").forEach((el) => {
+      el.onclick = () => copyPlain(el.getAttribute("data-copydl"));
+    });
+    p.querySelectorAll("[data-discard]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "discardTab", id: Number(el.getAttribute("data-discard")) });
+    });
+    p.querySelectorAll("[data-perm]").forEach((el) => {
+      el.onclick = () => {
+        const sw = el.querySelector(".sw");
+        const on = !(sw && sw.classList.contains("on"));
+        ipc({ cmd: "sitePerm", name: el.getAttribute("data-perm"), on: on });
+      };
+    });
+    p.querySelectorAll("[data-set]").forEach((el) => {
+      el.onchange = () => ipc({ cmd: "set", key: el.getAttribute("data-set"), value: el.value });
+    });
+    const sq = $("setsearch");
+    if (sq) {
+      sq.oninput = () => applySettingsView();
+      p.querySelectorAll("[data-setchip]").forEach((el) => {
+        el.onclick = () => {
+          setSec = el.getAttribute("data-setchip") || "all";
+          p.querySelectorAll("[data-setchip]").forEach((x) => x.classList.toggle("on", x === el));
+          const row = $("setresetrow");
+          if (row) row.style.display = setSec === "all" || setSec === "extra" ? "none" : "";
+          applySettingsView();
+        };
+      });
+      const adv = $("setadv");
+      if (adv) {
+        adv.onchange = () => {
+          setAdv = !!adv.checked;
+          try { localStorage.setItem("orvyn.adv", setAdv ? "1" : "0"); } catch (e) {}
+          applySettingsView();
+        };
+      }
+      applySettingsView();
+    }
+  }
+
+  window.render = function (s) {
+    st = s;
+    renderTabs();
+    renderPanel();
+    const eb = $("enginebtn");
+    if (eb) {
+      const e = s.searchEngine || "ddg";
+      eb.textContent = e === "google" ? "G" : (e === "own" ? "O" : "D");
+      eb.title = "Поиск: " + (e === "google" ? "Google" : (e === "own" ? "ORVYN" : "DuckDuckGo")) + ". Нажми, чтобы сменить. В адресной строке работают !g, !d, !y, !b, !w";
+    }
+
+    document.body.classList.toggle("glow", !!s.glow);
+    document.body.classList.toggle("noanim", !s.anim);
+    document.body.classList.toggle("haspanel", !!s.panel);
+    document.body.classList.toggle("light", s.theme === "light");
+    document.body.classList.toggle("maximized", !!s.maximized);
+    const b = document.body;
+    b.style.setProperty("--accent", s.accent || "#4fd1ff");
+    b.style.setProperty("--accent2", s.accent2 || "#8b7cff");
+    b.style.setProperty("--radius", (Number(s.uiRadius) || 10) + "px");
+    b.style.setProperty("--ui-opacity", String((Number(s.uiOpacity) || 100) / 100));
+    b.style.setProperty("--ui-blur", (Number(s.uiBlur) || 0) + "px");
+    b.style.setProperty("--ui-font", FONTS[s.uiFont] || FONTS.segoe);
+    b.style.fontFamily = FONTS[s.uiFont] || FONTS.segoe;
+    b.classList.toggle("toolbar-hidden", !!s.toolbarHidden);
+    b.classList.toggle("panel-left", !!s.panelLeft);
+    b.classList.toggle("addr-row", !!s.addressRow);
+    b.classList.remove("shape-rounded", "shape-pill", "shape-square");
+    b.classList.add("shape-" + (s.tabShape || "rounded"));
+    b.classList.remove("wall-none", "wall-aurora", "wall-grid", "wall-dots", "wall-paper");
+    b.classList.add("wall-" + (s.wallpaper || "none"));
+
+    $("back").disabled = !s.canBack;
+    $("fwd").disabled = !s.canForward;
+    $("star").classList.toggle("on", !!s.bookmarked);
+    $("blockedn").textContent = s.blocked > 999 ? "999+" : String(s.blocked);
+    const sec = s.security || {};
+    const sh = $("shield");
+    sh.classList.remove("sec-alert", "sec-warn", "sec-off", "sec-idle");
+    if (sec.level === "warn") sh.classList.add("sec-alert");
+    else if (sec.level === "http") sh.classList.add("sec-warn");
+    else if (sec.level === "off" || sec.level === "idle") sh.classList.add("sec-off");
+    sh.title = (sec.label || "Безопасность") +
+      (s.siteBlocked ? " · на сайте заблокировано " + s.siteBlocked : "") +
+      " · всего " + s.blocked;
+    $("incogBadge").classList.toggle("on", !!s.incognito);
+    $("dldot").style.display = s.dlActive > 0 ? "block" : "none";
+
+    if (!typing) $("url").value = urlText();
+    const s_url = String(s.url || "");
+    const internal = !s_url || s_url.indexOf("orvyn://") === 0 || s_url.indexOf("rustbrowser://") === 0;
+    $("lockIcon").style.color = internal ? "#5b6a86"
+                                      : (s_url.indexOf("https://") === 0 ? "var(--ok)" : "var(--amber)");
+
+    const pr = $("progress");
+    pr.classList.toggle("on", !!s.loading);
+    pr.style.width = s.loading ? "72%" : "0";
+  };
+
+  window.setBlocked = function (n) { $("blockedn").textContent = n > 999 ? "999+" : String(n); };
+  window.focusBar = function () { const i = $("url"); i.focus(); i.select(); };
+
+  $("back").onclick = () => ipc({ cmd: "back" });
+  $("fwd").onclick = () => ipc({ cmd: "forward" });
+  $("reload").onclick = () => ipc({ cmd: "reload" });
+  $("home").onclick = () => ipc({ cmd: "home" });
+  $("star").onclick = () => ipc({ cmd: "bookmark" });
+  $("downloads").onclick = () => ipc({ cmd: "panel", name: "downloads" });
+  $("musicbtn").onclick = () => ipc({ cmd: "panel", name: "music" });
+  $("menu").onclick = () => ipc({ cmd: "panel", name: "menu" });
+  $("aibtn").onclick = () => ipc({ cmd: "panel", name: "ai" });
+  $("enginebtn").onclick = () => {
+    const order = ["ddg", "google", "own"];
+    const next = order[(order.indexOf(st.searchEngine) + 1) % order.length];
+    ipc({ cmd: "set", key: "searchEngine", value: next });
+  };
+  $("addtab").onclick = () => ipc({ cmd: "newTab" });
+  $("showbar").onclick = () => ipc({ cmd: "toggle", name: "toolbarHidden" });
+  $("winmin").onclick = () => ipc({ cmd: "windowMin" });
+  $("winmax").onclick = () => ipc({ cmd: "windowMax" });
+  $("winclose").onclick = () => ipc({ cmd: "windowClose" });
+  $("shield").onclick = () => ipc({ cmd: "panel", name: "shield" });
+
+  const input = $("url");
+  input.addEventListener("focus", () => { typing = true; input.select(); });
+  input.addEventListener("blur", () => { typing = false; input.value = urlText(); });
+  input.addEventListener("input", () => { typing = true; });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const v = input.value.trim();
+      typing = false;
+      input.blur();
+      ipc({ cmd: "navigate", text: v });
+    } else if (e.key === "Escape") {
+      typing = false;
+      input.blur();
+      ipc({ cmd: "panel", name: "" });
+    }
+  });
+
+  function zoom(d) { ipc({ cmd: "zoom", delta: d }); }
+
+  document.addEventListener("keydown", (e) => {
+    const k = (e.key || "").toLowerCase();
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (k === "enter" && !e.shiftKey && e.target && e.target.id === "aiq") {
+      e.preventDefault();
+      const text = e.target.value || "";
+      if (text.trim() && !st.aiBusy) {
+        ipc({ cmd: "aiSend", text: text });
+        e.target.value = "";
+      }
+      return;
+    }
+    if (e.altKey && !ctrl && k === "a") {
+      e.preventDefault();
+      ipc({ cmd: "panel", name: "ai" });
+      return;
+    }
+    if (ctrl && e.shiftKey && k === "t") { e.preventDefault(); ipc({ cmd: "reopenTab" }); }
+    else if (ctrl && e.shiftKey && k === "n") { e.preventDefault(); ipc({ cmd: "newIncognito" }); }
+    else if (ctrl && k === "t") { e.preventDefault(); ipc({ cmd: "newTab" }); }
+    else if (ctrl && k === "w") { e.preventDefault(); ipc({ cmd: "closeTab", id: currentId() }); }
+    else if (ctrl && k === "l") { e.preventDefault(); window.focusBar(); }
+    else if (ctrl && k === "r") { e.preventDefault(); ipc({ cmd: "reload" }); }
+    else if (ctrl && e.shiftKey && k === "d") { e.preventDefault(); ipc({ cmd: "dupTab", id: currentId() }); }
+    else if (ctrl && k === "d") { e.preventDefault(); ipc({ cmd: "bookmark" }); }
+    else if (ctrl && k === "f") { e.preventDefault(); ipc({ cmd: "findInPage" }); }
+    else if (ctrl && k === "m") { e.preventDefault(); ipc({ cmd: "muteTab", id: currentId() }); }
+    else if (ctrl && e.shiftKey && k === "a") { e.preventDefault(); ipc({ cmd: "panel", name: "tabs" }); }
+    else if (ctrl && e.shiftKey && k === "b") { e.preventDefault(); ipc({ cmd: "toggle", name: "toolbarHidden" }); }
+    else if (ctrl && e.shiftKey && k === "l") { e.preventDefault(); ipc({ cmd: "vaultFillCurrent" }); }
+    else if (ctrl && e.shiftKey && k === "i") { e.preventDefault(); ipc({ cmd: "devtools" }); }
+    else if (ctrl && k === "tab") { e.preventDefault(); ipc({ cmd: "cycleTab", delta: e.shiftKey ? -1 : 1 }); }
+    else if (ctrl && (k === "+" || k === "=")) { e.preventDefault(); zoom(0.1); }
+    else if (ctrl && k === "-") { e.preventDefault(); zoom(-0.1); }
+    else if (ctrl && k === "0") { e.preventDefault(); zoom(0); }
+    else if (k === "f5") { e.preventDefault(); ipc({ cmd: "reload" }); }
+    else if (e.altKey && k === "arrowleft") { e.preventDefault(); ipc({ cmd: "back" }); }
+    else if (e.altKey && k === "arrowright") { e.preventDefault(); ipc({ cmd: "forward" }); }
+    else if (e.altKey && k === "home") { e.preventDefault(); ipc({ cmd: "home" }); }
+    else if (k === "escape") { ipc({ cmd: "panel", name: "" }); }
+  }, true);
+
+  document.addEventListener("mousedown", (e) => {
+    const p = $("panel");
+    if (p.classList.contains("hidden")) return;
+    if (p.contains(e.target) || e.target.closest("#menu") || e.target.closest("#shield") ||
+        e.target.closest("#downloads") || e.target.closest("#musicbtn")) return;
+    ipc({ cmd: "panel", name: "" });
+  }, true);
+
+  let dragFrom = null;
+  const tabbar = $("tabbar");
+  if (tabbar) {
+    tabbar.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      if (e.target.closest(".tab, button, input, select, textarea, a")) return;
+      dragFrom = { x: e.clientX, y: e.clientY };
+    });
+    window.addEventListener("pointermove", (e) => {
+      if (!dragFrom) return;
+      if (Math.abs(e.clientX - dragFrom.x) + Math.abs(e.clientY - dragFrom.y) > 3) {
+        dragFrom = null;
+        ipc({ cmd: "windowDrag" });
+      }
+    });
+    window.addEventListener("pointerup", () => { dragFrom = null; });
+    tabbar.addEventListener("dblclick", (e) => {
+      if (e.target.closest(".tab, button, input, select, textarea, a")) return;
+      ipc({ cmd: "windowMax" });
+    });
+  }
+
+  function currentId() { const t = st.tabs.find((x) => x.active); return t ? t.id : 0; }
+
+  render({
+    tabs: [], url: "", title: "", canBack: false, canForward: false, loading: false,
+    bookmarked: false, incognito: false, blocked: 0, bookmarks: [], history: [], panel: null,
+    muted: false,
+    zoom: 1, theme: "dark", snow: true, glow: true, anim: true,
+    proxyOn: false, proxyReady: false, proxyKind: "socks5", proxyHost: "", proxyPort: "",
+    proxyStatus: "", searchEngine: "ddg", homepage: "orvyn://newtab", restoreSession: true,
+    memorySaver: true, idleMinutes: 30, ramLimit: 2048, hwAccel: true, bgLimit: true,
+    permNotifications: false, permGeolocation: false, permCamera: false, permMicrophone: false,
+    protectionOn: true, redirectGuard: true, downloadGuard: true, mouseGestures: true, tabMetrics: true, lazyTabs: true,
+    siteBlocked: 0, topBlocked: [],
+    security: { level: "idle", label: "", host: "", https: false, protected: true, internal: true, warning: null, perms: {} },
+    lastFreed: 0, suggestDiscard: false,
+    cleanSize: 0, cleanScanning: false, usage: [], usageScanning: false, lastClean: 0,
+    cleanHistory: false, cleanCache: true, cleanCookies: false, autoClean: false, autoCleanDays: 7,
+    qrUrl: "", qrSvg: "",
+    closeWarn: true,
+    workspaces: [], workspaceActive: 0, sets: [],
+    bkBookmarks: true, bkSettings: true, bkHistory: true, bkSession: true, bkSpaces: true, bkSets: true, bkReplace: false,
+    accent: "#4fd1ff", accent2: "#8b7cff", tabShape: "rounded", uiRadius: 10, uiFont: "segoe",
+    uiOpacity: 100, uiBlur: 0, wallpaper: "none", toolbarHidden: false, panelLeft: false,
+    addressRow: false, themes: [], themeJson: "",
+    maximized: false, importBrowsers: [],
+    warpAvailable: false, warpStatus: "Unknown", warpSince: 0, warpBusy: false, warpError: "", warpAuto: false,
+    startupMs: 0,
+    translateLang: "ru",
+    aiOn: true, aiSave: true, aiBusy: false, aiError: "", aiModel: "GPT-OSS 20B", aiMessages: [], aiContextChars: 0,
+    vault: null, vaultExists: false, vaultError: "", vaultOrigin: "",
+    status: "", downloads: [], dlActive: 0, closedCount: 0, sleeping: 0,
+    ram: 0, cpu: 0, procs: 0
+  });
+})();
+</script>
+</body>
+</html>

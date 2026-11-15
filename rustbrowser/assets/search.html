@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Поиск — {{QUERY}}</title>
+<style>
+  :root { --accent:#4fd1ff; --accent2:#8b7cff; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #0b0d11; color: #e7ebf3;
+               font: 14px/1.5 "Segoe UI", system-ui, sans-serif; }
+  .head { position: sticky; top: 0; z-index: 5; padding: 18px 28px 16px;
+          background: rgba(11,13,17,.92); border-bottom: 1px solid #1a2030;
+          backdrop-filter: blur(10px); }
+  .head .q { font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+  .head .q em { font-style: normal; background: linear-gradient(90deg,#8fc4ff,#b9a4ff);
+                -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .head .meta { margin-top: 4px; color: #5f6a82; font-size: 12px; }
+  .list { max-width: 780px; padding: 14px 28px 60px; }
+  .res { display: flex; gap: 14px; padding: 14px 14px 16px; border-radius: 14px;
+         transition: background .14s; }
+  .res:hover { background: #10141c; }
+  .idx { width: 22px; flex: 0 0 auto; color: #39435a; font-size: 12px; padding-top: 3px; text-align: right; }
+  .body { min-width: 0; }
+  .host { display: flex; align-items: center; gap: 7px; color: #7d89a3; font-size: 12px; margin-bottom: 3px; }
+  .fav { width: 16px; height: 16px; border-radius: 5px; background: #1d2534; display: grid;
+         place-items: center; font-size: 9px; font-weight: 700; color: #9fb0cc; }
+  a.title { color: #9ecbff; font-size: 16px; text-decoration: none; display: inline-block;
+            max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  a.title:hover { text-decoration: underline; }
+  .snip { margin-top: 5px; color: #98a3b8; font-size: 13px; }
+  .err { margin: 26px 14px; padding: 16px 18px; border-radius: 12px; background: #161b26;
+         border: 1px solid #242e42; color: #b6c1d6; }
+  body.light { background: #f4f7fb; color: #1b2436; }
+  body.light .head { background: rgba(244,247,251,.94); border-color: #dde5f1; }
+  body.light .head .meta { color: #6c7a93; }
+  body.light .res:hover { background: #eaf0f8; }
+  body.light .idx { color: #9aa7bd; }
+  body.light .host { color: #65738d; }
+  body.light .fav { background: #e3eaf5; color: #4a5b76; }
+  body.light a.title { color: #0b6fa4; }
+  body.light .snip { color: #4f5d75; }
+  body.light .err { background: #fff; border-color: #dfe6f1; color: #33415a; }
+</style>
+</head>
+<body class="{{THEME}}">
+  <div class="head">
+    <div class="q">Результаты: <em>{{QUERY}}</em></div>
+    <div class="meta">найдено {{COUNT}} · поиск ORVYN</div>
+  </div>
+  <div class="list">{{RESULTS}}</div>
+</body>
+</html>
