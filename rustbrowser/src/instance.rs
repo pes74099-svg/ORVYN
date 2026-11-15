@@ -15,7 +15,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
 };
 
 const MUTEX_NAME: &str = "Local\\ORVYN.SingleInstance.v1";
-const WINDOW_TITLE: &str = "ORVYN 2.2";
+pub const WINDOW_TITLE: &str = concat!("ORVYN ", env!("CARGO_PKG_VERSION"));
 
 static MUTEX: AtomicUsize = AtomicUsize::new(0);
 
