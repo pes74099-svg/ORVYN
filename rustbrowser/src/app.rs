@@ -767,7 +767,7 @@ impl App {
             .replace("{{SNOW}}", if s.snow { "true" } else { "false" })
             .replace("{{GLOW}}", if s.glow { "true" } else { "false" })
             .replace("{{ANIM}}", if s.anim { "true" } else { "false" })
-            .replace("{{THEME}}", if s.light() { "light" } else { "dark" })
+            .replace("{{THEME}}", &s.theme)
             .replace("{{ACCENT}}", &s.accent)
             .replace("{{ACCENT2}}", &s.accent2)
             .replace("{{FONT}}", font)
@@ -2303,6 +2303,7 @@ impl App {
     fn theme_profile(&self, name: &str) -> storage::ThemeProfile {
         let s = &self.store.settings;
         storage::ThemeProfile {
+            version: 2,
             name: name.to_string(),
             theme: s.theme.clone(),
             accent: s.accent.clone(),
@@ -2472,6 +2473,7 @@ impl App {
         p.name = "Импорт".to_string();
         let name = format!("Импорт {}", storage::now() % 10000);
         p.name = name;
+        storage::normalize_theme(&mut p);
         self.apply_theme_profile(&p);
         if !self.store.themes.iter().any(|x| x.name == p.name) {
             self.store.themes.push(p.clone());
@@ -3364,10 +3366,10 @@ impl App {
                 self.status = "Стартовая страница сохранена.".to_string();
             }
             "theme" => {
-                self.store.settings.theme = if v.as_str() == Some("light") {
-                    "light".to_string()
-                } else {
-                    "dark".to_string()
+                self.store.settings.theme = match v.as_str() {
+                    Some("light") => "light".to_string(),
+                    Some("amoled") => "amoled".to_string(),
+                    _ => "dark".to_string(),
                 };
                 self.reload_newtab();
             }

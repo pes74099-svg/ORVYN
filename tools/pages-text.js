@@ -38,7 +38,7 @@ async function evalOn(tab, expression) {
   for (const t of list) {
     if (t.type !== "page") continue;
     if ((await evalOn(t, "!!document.getElementById('panel')")) === true) continue;
-    const info = await evalOn(t, "JSON.stringify({h:location.href,t:document.title,n:document.body?document.body.innerText.replace(/\\s+/g,' ').slice(0,150):'',len:document.body?document.body.innerHTML.length:0})");
+    const info = await evalOn(t, "JSON.stringify({h:location.href,t:document.title,bg:getComputedStyle(document.body).backgroundColor,n:document.body?document.body.innerText.replace(/\\s+/g,' ').slice(0,150):'',len:document.body?document.body.innerHTML.length:0})");
     console.log(t.title || "(no title)", "=>", info);
   }
 })();

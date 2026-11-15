@@ -208,7 +208,11 @@ impl Settings {
                 fallback.to_string()
             }
         }
-        self.theme = if self.theme == "light" { "light".into() } else { "dark".into() };
+        self.theme = match self.theme.as_str() {
+            "light" => "light".into(),
+            "amoled" => "amoled".into(),
+            _ => "dark".into(),
+        };
         self.accent = hex(&self.accent, "#4fd1ff");
         self.accent2 = hex(&self.accent2, "#8b7cff");
         if !matches!(self.tab_shape.as_str(), "rounded" | "pill" | "square") {
@@ -332,7 +336,11 @@ pub struct SavedSet {
 /// Сохранённый образец оформления.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default)]
-pub struct ThemeProfile {    pub name: String,
+pub struct ThemeProfile {
+    /// Версия формата профиля. 2 — с режимом AMOLED, старые файлы читаются.
+    #[serde(default)]
+    pub version: u32,
+    pub name: String,
     pub theme: String,
     pub accent: String,
     pub accent2: String,
@@ -347,6 +355,7 @@ pub struct ThemeProfile {    pub name: String,
 impl Default for ThemeProfile {
     fn default() -> Self {
         Self {
+            version: 2,
             name: String::new(),
             theme: "dark".to_string(),
             accent: "#4fd1ff".to_string(),
@@ -375,6 +384,49 @@ pub const THEME_PRESETS: &[(&str, &str)] = &[
     ("custom", "Custom"),
 ];
 
+/// Проверяет цвет вида `#rrggbb`, иначе возвращает запасной.
+fn hex_color(s: &str, fallback: &str) -> String {
+    let t = s.trim();
+    if t.len() == 7 && t.starts_with('#') && t[1..].chars().all(|c| c.is_ascii_hexdigit()) {
+        t.to_ascii_lowercase()
+    } else {
+        fallback.to_string()
+    }
+}
+
+/// Приводит импортированный профиль к допустимым значениям.
+///
+/// Старые файлы без `version` читаются как v1 и получают актуальную версию.
+pub fn normalize_theme(p: &mut ThemeProfile) {
+    p.version = 2;
+    p.theme = match p.theme.as_str() {
+        "light" => "light".to_string(),
+        "amoled" => "amoled".to_string(),
+        _ => "dark".to_string(),
+    };
+    p.accent = hex_color(&p.accent, "#4fd1ff");
+    p.accent2 = hex_color(&p.accent2, "#8b7cff");
+    if !matches!(p.tab_shape.as_str(), "rounded" | "pill" | "square") {
+        p.tab_shape = "rounded".to_string();
+    }
+    p.ui_radius = p.ui_radius.min(18);
+    if !matches!(
+        p.ui_font.as_str(),
+        "segoe" | "system" | "arial" | "georgia" | "consolas"
+    ) {
+        p.ui_font = "segoe".to_string();
+    }
+    p.ui_opacity = p.ui_opacity.clamp(60, 100);
+    p.ui_blur = p.ui_blur.min(24);
+    if !matches!(
+        p.wallpaper.as_str(),
+        "none" | "aurora" | "grid" | "dots" | "paper"
+    ) {
+        p.wallpaper = "none".to_string();
+    }
+    p.name = p.name.trim().chars().take(40).collect();
+}
+
 /// Готовый профиль оформления. Значения проходят ту же проверку, что и импорт тем.
 pub fn theme_preset(id: &str) -> Option<ThemeProfile> {
     #[allow(clippy::too_many_arguments)]
@@ -391,6 +443,7 @@ pub fn theme_preset(id: &str) -> Option<ThemeProfile> {
         wallpaper: &str,
     ) -> ThemeProfile {
         ThemeProfile {
+            version: 2,
             name: name.to_string(),
             theme: theme.to_string(),
             accent: accent.to_string(),
@@ -420,7 +473,7 @@ pub fn theme_preset(id: &str) -> Option<ThemeProfile> {
             "Glass", "dark", "#9ad8ff", "#b39dff", "pill", 14, "segoe", 86, 20, "aurora",
         ),
         "amoled" => make(
-            "AMOLED", "dark", "#00e5a0", "#00b0ff", "square", 2, "segoe", 100, 0, "none",
+            "AMOLED", "amoled", "#00e5a0", "#00b0ff", "square", 2, "segoe", 100, 0, "none",
         ),
         "colorful" => make(
             "Colorful", "light", "#ff5c8a", "#7c4dff", "pill", 16, "georgia", 100, 0, "dots",
@@ -1014,7 +1067,7 @@ fn normalize(store: &mut Store) {
         }
     }
     store.settings.homepage = normalize_home(&store.settings.homepage);
-    if store.settings.theme != "light" {
+    if !matches!(store.settings.theme.as_str(), "light" | "dark" | "amoled") {
         store.settings.theme = "dark".to_string();
     }
     store.settings.idle_minutes = store.settings.idle_minutes.min(240);
@@ -1248,12 +1301,31 @@ mod tests {
     }
 
     #[test]
+    fn theme_v2_accepts_amoled_and_upgrades_old_files() {
+        let mut p: ThemeProfile =
+            serde_json::from_str(r##"{"name":"Old","theme":"light","accent":"#FFFFFF"}"##).unwrap();
+        assert_eq!(p.version, 0);
+        normalize_theme(&mut p);
+        assert_eq!(p.version, 2);
+        assert_eq!(p.theme, "light");
+        assert_eq!(p.accent, "#ffffff");
+
+        p.theme = "amoled".to_string();
+        normalize_theme(&mut p);
+        assert_eq!(p.theme, "amoled");
+
+        p.theme = "neon".to_string();
+        normalize_theme(&mut p);
+        assert_eq!(p.theme, "dark");
+    }
+
+    #[test]
     fn theme_presets_are_valid() {
         assert_eq!(THEME_PRESETS.len(), 10);
         for (id, name) in THEME_PRESETS {
             let p = theme_preset(id).unwrap_or_else(|| panic!("нет пресета {id}"));
             assert_eq!(p.name.as_str(), *name);
-            assert!(p.theme == "dark" || p.theme == "light");
+            assert!(matches!(p.theme.as_str(), "dark" | "light" | "amoled"));
             for c in [&p.accent, &p.accent2] {
                 assert!(c.len() == 7 && c.starts_with('#') && c[1..].chars().all(|x| x.is_ascii_hexdigit()));
             }

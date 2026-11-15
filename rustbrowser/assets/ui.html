@@ -35,6 +35,33 @@
     --danger: #d43a52;
     color-scheme: light;
   }
+  /* AMOLED: настоящий чёрный фон, без серых «почти чёрных» поверхностей. */
+  body.amoled {
+    --bg: #000000;
+    --surface: #050505;
+    --surface2: #0b0b0b;
+    --surface3: #141414;
+    --text: #f4f7fb;
+    --muted: #8b95a3;
+    --ok: #37d99a;
+    --amber: #f0b45a;
+    --danger: #ff6b81;
+    color-scheme: dark;
+  }
+  body.amoled #backdrop { background: #000; }
+  body.amoled #tabbar { border-color: #141414; }
+  body.amoled .tab { background: #070707; }
+  body.amoled .tab:hover { background: #0e0e0e; }
+  body.amoled .tab.active { background: #000; border-color: #1c1c1c; }
+  body.amoled #toolbar { border-color: #121212; }
+  body.amoled #omni { background: #050505; border-color: #1a1a1a; }
+  body.amoled #panel { background: color-mix(in srgb, #050505 calc(var(--ui-opacity) * 100%), transparent); border-color: #1a1a1a; }
+  body.amoled .pbtn { background: #0b0b0b; border-color: #1d1d1d; }
+  body.amoled .pbtn:hover { background: #151515; border-color: #292929; }
+  body.amoled .sform input, body.amoled .sform select { background: #0a0a0a; border-color: #1d1d1d; }
+  body.amoled .item:hover { background: #0c0c0c; }
+  body.amoled .sep { background: #161616; }
+  body.amoled .setsec .item { background: transparent; }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; height: 100%; overflow: hidden;
@@ -1319,7 +1346,8 @@
       h += '<div class="sect">Основа</div>';
       h += '<div class="sform"><div class="fline"><select data-set="theme" data-k="theme">' +
            '<option value="dark"' + (st.theme === "dark" ? " selected" : "") + '>Тёмная тема</option>' +
-           '<option value="light"' + (st.theme === "light" ? " selected" : "") + '>Светлая тема</option></select></div>' +
+           '<option value="light"' + (st.theme === "light" ? " selected" : "") + '>Светлая тема</option>' +
+           '<option value="amoled"' + (st.theme === "amoled" ? " selected" : "") + '>AMOLED — чистый чёрный</option></select></div>' +
            '<div class="fline"><span class="note" style="flex:1 1 auto">Акцент</span>' +
            '<input type="color" data-set="accent" data-k="accent" value="' + esc(st.accent) + '" style="width:44px;height:28px;flex:0 0 auto;padding:2px">' +
            '<input type="color" data-set="accent2" data-k="accent2" value="' + esc(st.accent2) + '" style="width:44px;height:28px;flex:0 0 auto;padding:2px"></div>' +
@@ -1455,6 +1483,7 @@
       h += '<div class="sform"><div class="fline"><select data-set="theme" data-k="theme">' +
            '<option value="dark"' + (st.theme === "dark" ? " selected" : "") + '>Тёмная тема</option>' +
            '<option value="light"' + (st.theme === "light" ? " selected" : "") + '>Светлая тема</option>' +
+           '<option value="amoled"' + (st.theme === "amoled" ? " selected" : "") + '>AMOLED — чистый чёрный</option>' +
            '</select></div></div>';
       h += '<div class="item" data-t="snow"><span class="ic">' + I.snow + '</span><div class="body"><div class="l1">Снег</div><div class="l2">снежинки на новой вкладке</div></div>' + switchRow(st.snow) + '</div>';
       h += '<div class="item" data-t="glow"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">Свечение</div><div class="l2">мягкие пятна и подсветка</div></div>' + switchRow(st.glow) + '</div>';
@@ -2036,6 +2065,7 @@
     document.body.classList.toggle("noanim", !s.anim);
     document.body.classList.toggle("haspanel", !!s.panel);
     document.body.classList.toggle("light", s.theme === "light");
+    document.body.classList.toggle("amoled", s.theme === "amoled");
     document.body.classList.toggle("maximized", !!s.maximized);
     const b = document.body;
     b.style.setProperty("--accent", s.accent || "#4fd1ff");
