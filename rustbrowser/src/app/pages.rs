@@ -185,8 +185,29 @@ impl App {
                 self.refresh();
             }
             "ctrl+shift+b" => {
-                let next = !self.store.settings.toolbar_hidden;
-                self.set_setting("toolbarHidden", &serde_json::Value::Bool(next));
+                let next = !self.store.settings.bookmarks_bar;
+                self.set_setting("bookmarksBar", &serde_json::Value::Bool(next));
+            }
+            "ctrl+h" => {
+                self.panel = Some("history".to_string());
+                self.layout();
+                self.refresh();
+            }
+            "ctrl+j" => {
+                self.panel = Some("downloads".to_string());
+                self.layout();
+                self.refresh();
+            }
+            "ctrl+shift+o" => {
+                self.panel = Some("bookmarks".to_string());
+                self.layout();
+                self.refresh();
+            }
+            "ctrl+shift+delete" => {
+                self.panel = Some("clean".to_string());
+                self.scan_profile_size();
+                self.layout();
+                self.refresh();
             }
             "ctrl+shift+l" => self.vault_fill_current(),
             "alt+a" => {

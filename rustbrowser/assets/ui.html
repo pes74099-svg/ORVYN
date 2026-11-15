@@ -35,6 +35,99 @@
     --danger: #d43a52;
     color-scheme: light;
   }
+  /* AMOLED: настоящий чёрный фон, без серых «почти чёрных» поверхностей. */
+  body.amoled {
+    --bg: #000000;
+    --surface: #050505;
+    --surface2: #0b0b0b;
+    --surface3: #141414;
+    --text: #f4f7fb;
+    --muted: #8b95a3;
+    --ok: #37d99a;
+    --amber: #f0b45a;
+    --danger: #ff6b81;
+    color-scheme: dark;
+  }
+  body.amoled #backdrop { background: #000; }
+  body.amoled #tabbar { border-color: #141414; }
+  body.amoled .tab { background: #070707; }
+  body.amoled .tab:hover { background: #0e0e0e; }
+  body.amoled .tab.active { background: #000; border-color: #1c1c1c; }
+  body.amoled #toolbar { border-color: #121212; }
+  body.amoled #omni { background: #050505; border-color: #1a1a1a; }
+  body.amoled #panel { background: color-mix(in srgb, #050505 calc(var(--ui-opacity) * 100%), transparent); border-color: #1a1a1a; }
+  body.amoled .pbtn { background: #0b0b0b; border-color: #1d1d1d; }
+  body.amoled .pbtn:hover { background: #151515; border-color: #292929; }
+  body.amoled .sform input, body.amoled .sform select { background: #0a0a0a; border-color: #1d1d1d; }
+  body.amoled .item:hover { background: #0c0c0c; }
+  body.amoled .sep { background: #161616; }
+  body.amoled .setsec .item { background: transparent; }
+
+  /* ---------- стиль Chrome (по умолчанию) ---------- */
+  body.style-chrome.light {
+    --bg: #dee1e6; --surface: #ffffff; --surface2: #f1f3f4; --surface3: #e8eaed;
+    --text: #202124; --muted: #5f6368;
+    --ok: #188038; --danger: #d93025; --amber: #b06000;
+    color-scheme: light;
+  }
+  body.style-chrome:not(.light) {
+    --bg: #202124; --surface: #292a2d; --surface2: #35363a; --surface3: #3c4043;
+    --text: #e8eaed; --muted: #9aa0a6;
+  }
+  body.style-chrome #tabbar { height: 44px; padding: 8px 6px 0 8px; background: var(--bg); border-bottom: 0; }
+  body.style-chrome .tab { height: 35px; border-radius: 8px 8px 0 0; background: transparent; border: 0;
+                           color: var(--muted); min-width: 140px; }
+  body.style-chrome .tab:hover { background: var(--surface2); color: var(--text); }
+  body.style-chrome .tab.active { background: var(--surface); color: var(--text); box-shadow: none; border-color: transparent; }
+  body.style-chrome .tab.active::after { display: none; }
+  body.style-chrome .tab .fav { background: transparent; color: var(--muted); border-radius: 4px; }
+  body.style-chrome .tab.active .fav { background: transparent; }
+  body.style-chrome #toolbar { height: 48px; padding: 0 6px; background: var(--surface);
+                               border-bottom: 1px solid rgba(0,0,0,.12); }
+  body.style-chrome:not(.light) #toolbar { border-bottom-color: #3c4043; }
+  body.style-chrome .btn { width: 34px; height: 34px; border-radius: 50%; }
+  body.style-chrome .btn:hover { background: var(--surface2); }
+  body.style-chrome #omni { height: 36px; margin: 0 8px; border-radius: 18px;
+                            background: var(--surface2); border: 1px solid transparent; }
+  body.style-chrome #omni:focus-within { background: var(--surface); border-color: var(--accent);
+                                         box-shadow: 0 1px 6px rgba(32,33,36,.22); }
+  body.style-chrome #panel { border-radius: 8px; border-color: #dadce0; box-shadow: 0 2px 10px rgba(32,33,36,.24); }
+  body.style-chrome:not(.light) #panel { background: #292a2d; border-color: #3c4043; }
+  body.style-chrome .tab.sleep .ttl { font-style: normal !important; }
+  body.style-chrome #tablist { flex: 0 1 auto; }
+  body.style-chrome #addtab { margin-left: 4px; }
+  #bookmarksbar { display: none; height: 32px; align-items: center; gap: 2px; padding: 0 10px;
+                  overflow: hidden; background: var(--surface); border-bottom: 1px solid rgba(0,0,0,.06); }
+  body.style-chrome:not(.light) #bookmarksbar { border-bottom-color: #3c4043; }
+  #bookmarksbar .bm { height: 26px; padding: 0 8px; border-radius: 6px; font-size: 12px; color: var(--text);
+                      max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #bookmarksbar .bm:hover { background: var(--surface2); }
+  body.style-chrome #bookmarksbar { position: relative; }
+  body.style-chrome #enginebtn { display: none; }
+  body.style-chrome #home { display: none; }
+  body.style-chrome #enginebtn,
+  body.style-chrome #downloads,
+  body.style-chrome #musicbtn,
+  body.style-chrome #shield,
+  body.style-chrome #aibtn,
+  body.style-chrome #star { display: none; }
+  .omni-star { display: none; }
+  body.style-chrome .omni-star { display: grid; place-items: center; width: 30px; height: 30px;
+                                 border-radius: 50%; flex: 0 0 auto; margin-right: 2px; color: var(--muted); }
+  body.style-chrome .omni-star:hover { background: var(--surface3); color: var(--text); }
+  body.style-chrome .omni-star.on { color: var(--accent); }
+  .profilebtn { display: none; }
+  body.style-chrome .profilebtn { display: grid; place-items: center; }
+  .extbtn { display: none; }
+  body.style-chrome .extbtn { display: grid; place-items: center; }
+  .profilebtn .avatar { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+                        background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff;
+                        font-size: 12px; font-weight: 700; }
+  body.style-chrome #toolbar { height: 42px; }
+  body.style-chrome .btn { width: 32px; height: 32px; }
+  body.style-chrome #omni { height: 34px; border-radius: 17px; padding-right: 2px; }
+  body.style-chrome #tabbar { height: 40px; padding: 6px 8px 0 8px; }
+  body.style-chrome .tab { height: 34px; font-size: 12px; }
   * { box-sizing: border-box; }
   html, body {
     margin: 0; padding: 0; height: 100%; overflow: hidden;
@@ -92,6 +185,7 @@
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     display: grid; place-items: center; font-size: 8.5px; font-weight: 700; color: #051018;
   }
+  .tab .fav svg { width: 12px; height: 12px; stroke-width: 2; }
   .tab .gdot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto;
                 background: var(--gcolor, #8b7cff); box-shadow: 0 0 0 2px rgba(255,255,255,.06); }
   .tab.grouped::before { content: ""; position: absolute; left: 6px; right: 6px; top: 0; height: 2px;
@@ -119,7 +213,7 @@
   #addtab { width: 28px; height: 28px; border-radius: 9px; color: var(--muted); display: grid;
             place-items: center; margin-left: 4px; flex: 0 0 auto; }
   #addtab:hover { background: var(--surface2); color: var(--text); }
-  #winctl { display: flex; align-self: flex-start; height: 38px; margin-top: -6px; margin-left: 2px; flex: 0 0 auto; }
+  #winctl { display: flex; align-self: flex-start; height: 38px; margin-top: -6px; margin-left: auto; flex: 0 0 auto; }
   .wbtn { width: 46px; height: 38px; border-radius: 0; display: grid; place-items: center;
           color: var(--muted); flex: 0 0 auto; }
   .wbtn:hover { background: var(--surface2); color: var(--text); }
@@ -192,6 +286,7 @@
     scrollbar-width: thin; scrollbar-color: #2a3548 transparent;
   }
   body.light #panel { background: color-mix(in srgb, #ffffff calc(var(--ui-opacity) * 100%), transparent); border-color: #dfe6f1; box-shadow: 0 24px 64px rgba(20,35,60,.18); }
+  body.light.style-chrome #panel { border-color: #dadce0; box-shadow: 0 2px 10px rgba(32,33,36,.24); }
   #panel.hidden { display: none; }
   @keyframes drop { from { opacity: 0; transform: translateY(-7px) scale(.995) } to { opacity: 1; transform: none } }
   .phead { display: flex; align-items: center; justify-content: space-between; padding: 8px 9px; }
@@ -524,6 +619,9 @@
         <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
       </span>
       <input id="url" spellcheck="false" autocomplete="off" placeholder="Поиск или адрес">
+      <button class="btn omni-star" id="star2" title="В закладки (Ctrl+D)">
+        <svg viewBox="0 0 24 24"><path d="M12 3.6l2.6 5.4 5.9.8-4.3 4.1 1.1 5.9L12 17l-5.3 2.8 1.1-5.9L3.5 9.8l5.9-.8z"/></svg>
+      </button>
     </div>
     <div id="incogBadge" title="Режим инкогнито">
       <svg viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M2 12h4l2-5 4 10 3-6 2 1h5"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
@@ -546,10 +644,18 @@
     <button class="btn" id="aibtn" title="ORVYN AI (Alt+A)">
       <svg viewBox="0 0 24 24"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/></svg>
     </button>
+    <button class="btn extbtn" id="extbtn" title="Расширения и трипы">
+      <svg viewBox="0 0 24 24"><path d="M9 3h3a2 2 0 1 1 4 0h3v5a2 2 0 1 0 0 4v4h-5a2 2 0 1 1-4 0H5v-5a2 2 0 1 0 0-4V3z"/></svg>
+    </button>
+    <button class="btn profilebtn" id="profilebtn" title="Профиль ORVYN">
+      <span class="avatar">O</span>
+    </button>
     <button class="btn" id="menu" title="Меню и настройки">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="12" cy="19" r="1.4"/></svg>
     </button>
   </div>
+
+  <div id="bookmarksbar"></div>
 
   <div id="progress"></div>
   <div id="panel" class="hidden"></div>
@@ -768,9 +874,10 @@
       }
       const label = (t.title || hostOf(t.url) || "Новая вкладка").slice(0, 80);
       const host = hostOf(t.url);
+      const isNew = !t.url || t.url === ORVYN_NEWTAB || host === "Новая вкладка";
       const letter = (host === "Новая вкладка" || host === "Поиск" ? "o" : host.trim().charAt(0)) || "o";
       const title = t.incognito ? "Инкогнито" : label;
-      el.innerHTML = '<span class="fav">' + esc(t.incognito ? "I" : letter.toUpperCase()) + '</span>' +
+      el.innerHTML = '<span class="fav">' + (isNew ? I.globe : esc(t.incognito ? "I" : letter.toUpperCase())) + '</span>' +
                      (t.group ? '<span class="gdot" title="Группа: ' + esc(t.group) + '"></span>' : '') +
                      '<span class="ttl">' + esc(title) + '</span>' +
                      (t.muted ? '<span class="mute" title="Звук выключен">' + I.mute + '</span>' : '') +
@@ -783,6 +890,26 @@
         else ipc({ cmd: "selectTab", id: t.id });
       };
       el.onauxclick = (e) => { if (e.button === 1) ipc({ cmd: "closeTab", id: t.id }); };
+      el.draggable = true;
+      el.ondragstart = (e) => {
+        try {
+          e.dataTransfer.setData("text/plain", String(t.id));
+          e.dataTransfer.effectAllowed = "move";
+        } catch (err) {}
+      };
+      el.ondragover = (e) => { e.preventDefault(); try { e.dataTransfer.dropEffect = "move"; } catch (err) {} };
+      el.ondrop = (e) => {
+        e.preventDefault();
+        const id = Number(e.dataTransfer.getData("text/plain"));
+        if (!id) return;
+        const tabs = [...list.querySelectorAll(".tab")];
+        let index = tabs.length - 1;
+        for (let i = 0; i < tabs.length; i++) {
+          const r = tabs[i].getBoundingClientRect();
+          if (e.clientX < r.left + r.width / 2) { index = i; break; }
+        }
+        ipc({ cmd: "moveTab", id: id, index: index });
+      };
       el.oncontextmenu = (e) => {
         e.preventDefault();
         const name = prompt("Группа вкладки (пусто — убрать метку)", t.group || "");
@@ -920,7 +1047,7 @@
       h += '<div class="item" data-a="custom"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">Оформление</div><div class="l2">цвета, форма, шрифт, обои и профили</div></div></div>';
       h += '<div class="item" data-a="music"><span class="ic">' + I.music + '</span><div class="body"><div class="l1">Музыка</div><div class="l2">бесплатные сервисы и обход региона</div></div></div>';
       h += '<div class="item" data-a="devtools"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">DevTools</div><div class="l2">Ctrl+Shift+I</div></div></div>';
-      h += '<div class="item" data-a="about"><span class="ic">' + I.info + '</span><div class="body"><div class="l1">О браузере</div><div class="l2">ORVYN 2.2</div></div></div>';
+      h += '<div class="item" data-a="about"><span class="ic">' + I.info + '</span><div class="body"><div class="l1">О браузере</div><div class="l2">ORVYN ' + esc(st.appVersion || "3.0") + '</div></div></div>';
     }
 
     if (st.panel === "music") {
@@ -1319,7 +1446,8 @@
       h += '<div class="sect">Основа</div>';
       h += '<div class="sform"><div class="fline"><select data-set="theme" data-k="theme">' +
            '<option value="dark"' + (st.theme === "dark" ? " selected" : "") + '>Тёмная тема</option>' +
-           '<option value="light"' + (st.theme === "light" ? " selected" : "") + '>Светлая тема</option></select></div>' +
+           '<option value="light"' + (st.theme === "light" ? " selected" : "") + '>Светлая тема</option>' +
+           '<option value="amoled"' + (st.theme === "amoled" ? " selected" : "") + '>AMOLED — чистый чёрный</option></select></div>' +
            '<div class="fline"><span class="note" style="flex:1 1 auto">Акцент</span>' +
            '<input type="color" data-set="accent" data-k="accent" value="' + esc(st.accent) + '" style="width:44px;height:28px;flex:0 0 auto;padding:2px">' +
            '<input type="color" data-set="accent2" data-k="accent2" value="' + esc(st.accent2) + '" style="width:44px;height:28px;flex:0 0 auto;padding:2px"></div>' +
@@ -1452,9 +1580,16 @@
 
       h += '<div class="setsec" data-sec="look">';
       h += '<div class="sect">Внешний вид</div>';
+      h += '<div class="sform"><div class="fline"><span class="note" style="flex:1 1 auto">Стиль интерфейса</span><select data-set="uiStyle" data-k="uiStyle">' +
+           '<option value="chrome"' + (st.uiStyle !== "orvyn" ? " selected" : "") + '>Chrome — по умолчанию</option>' +
+           '<option value="orvyn"' + (st.uiStyle === "orvyn" ? " selected" : "") + '>ORVYN</option>' +
+           '</select></div>' +
+           '<div class="note">Chrome-стиль повторяет привычную раскладку: вкладки сверху, омнибокс-пилюля, круглые кнопки. Тема и акценты работают в обоих стилях.</div></div>';
+      h += '<div class="item" data-t="bookmarksBar"><span class="ic">' + I.star + '</span><div class="body"><div class="l1">Полоса закладок</div><div class="l2">под панелью, как в Chrome (выкл. по умолчанию)</div></div>' + switchRow(st.bookmarksBar) + '</div>';
       h += '<div class="sform"><div class="fline"><select data-set="theme" data-k="theme">' +
            '<option value="dark"' + (st.theme === "dark" ? " selected" : "") + '>Тёмная тема</option>' +
            '<option value="light"' + (st.theme === "light" ? " selected" : "") + '>Светлая тема</option>' +
+           '<option value="amoled"' + (st.theme === "amoled" ? " selected" : "") + '>AMOLED — чистый чёрный</option>' +
            '</select></div></div>';
       h += '<div class="item" data-t="snow"><span class="ic">' + I.snow + '</span><div class="body"><div class="l1">Снег</div><div class="l2">снежинки на новой вкладке</div></div>' + switchRow(st.snow) + '</div>';
       h += '<div class="item" data-t="glow"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">Свечение</div><div class="l2">мягкие пятна и подсветка</div></div>' + switchRow(st.glow) + '</div>';
@@ -1509,6 +1644,10 @@
       h += '<div class="sect">ORVYN AI</div>';
       h += '<div class="item" data-t="aiOn"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">ORVYN AI включён</div><div class="l2">бесплатный облачный помощник без ключей</div></div>' + switchRow(st.aiOn) + '</div>';
       h += '<div class="item" data-t="aiSave" data-adv="1"><span class="ic">' + I.clock + '</span><div class="body"><div class="l1">Сохранять историю AI</div><div class="l2">в store.json на этом ПК</div></div>' + switchRow(st.aiSave) + '</div>';
+      h += '<div class="sform"><div class="fline"><input data-set="aiEndpoint" data-k="aiEndpoint" spellcheck="false" placeholder="https://api.openai.com/v1 (пусто — бесплатный AI)" value="' + esc(st.aiEndpoint || "") + '"></div>' +
+           '<div class="fline"><input data-set="aiModelCustom" data-k="aiModelCustom" spellcheck="false" placeholder="Модель: gpt-4o-mini, llama-3.3-70b…" value="' + esc(st.aiModelCustom || "") + '"></div>' +
+           '<div class="fline"><input data-set="aiKey" data-k="aiKey" type="password" spellcheck="false" placeholder="' + (st.aiKeySet ? "Ключ сохранён — введи новый, чтобы заменить" : "API-ключ провайдера") + '" value=""></div>' +
+           '<div class="note">Свой OpenAI-совместимый провайдер: полный адрес API и модель. Ключ хранится локально в store.json открытым текстом — не вводи чужой ключ на общем ПК. Пустые поля = бесплатный ORVYN AI без ключей.</div></div>';
       h += '</div>';
 
       h += '<div class="setsec" data-sec="sites">';
@@ -1518,6 +1657,13 @@
       h += '<div class="item" data-a="extensions"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">Расширения и скрипты</div><div class="l2">userscripts, YouTube-антиреклама, папка установки</div></div></div>';
       h += '<div class="item" data-a="devtools" data-adv="1"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">DevTools</div><div class="l2">Ctrl+Shift+I</div></div></div>';
       h += '<div class="item" data-a="about"><span class="ic">' + I.info + '</span><div class="body"><div class="l1">О браузере</div></div></div>';
+      h += '</div>';
+
+      h += '<div class="setsec" data-sec="sync">';
+      h += '<div class="sect">Синхронизация</div>';
+      h += '<div class="sform"><div class="fline"><input data-set="syncFolder" data-k="syncFolder" spellcheck="false" placeholder="Папка на диске или в облаке" value="' + esc(st.syncFolder || "") + '"></div>' +
+           '<div class="fline"><button class="pbtn primary" data-a="syncNow">Синхронизировать</button><button class="pbtn" data-a="syncPick">Выбрать папку</button></div>' +
+           '<div class="note">ORVYN кладёт в эту папку файл orvyn-sync.json: закладки и история объединяются без удаления. Настройки и пароли не синхронизируются. Подходит папка OneDrive, Яндекс.Диска или сетевой диск. Версия 1 — по кнопке.</div></div>';
       h += '</div>';
 
       h += '<div class="setsec" data-sec="extra">';
@@ -1625,7 +1771,7 @@
 
     if (st.panel === "about") {
       h += '<div class="phead"><span class="t">О браузере</span><span class="act" data-a="close">Закрыть</span></div>';
-      h += '<div class="about"><b>ORVYN 2.2</b> — лёгкий браузер на Rust.<br>' +
+      h += '<div class="about"><b>ORVYN ' + esc(st.appVersion || "3.0") + '</b> — лёгкий браузер на Rust.<br>' +
            'Оболочка, вкладки и вся логика — Rust (tao + wry), движок — WebView2 (Chromium).<br>' +
            'Без Electron и лишних фоновых процессов.<br>' +
            'Поиск: DuckDuckGo по умолчанию, Google и своя выдача ORVYN — на выбор.<br>' +
@@ -1638,6 +1784,12 @@
            '<span class="k">Ctrl+L</span> адрес · <span class="k">Ctrl+D</span> закладка · ' +
            '<span class="k">Ctrl+Shift+L</span> пароль · <span class="k">Ctrl+Tab</span> переключение · ' +
            '<span class="k">Ctrl+Shift+I</span> DevTools</div>';
+      h += '<div class="sform"><div class="fline"><span class="note" style="flex:1 1 auto">' +
+           (st.updateChecking ? "Проверяю обновления…" : esc(st.updateText || "Обновления проверяются через GitHub Releases.")) +
+           '</span><button class="pbtn' + (st.updateReady ? " primary" : "") + '" data-a="' +
+           (st.updateReady ? "openUpdate" : "checkUpdate") + '">' +
+           (st.updateReady ? "Скачать" : "Проверить") + '</button></div>' +
+           '<div class="note">Без фоновой установки: ORVYN покажет новую версию и откроет страницу загрузки. Ничего не ставится без твоего согласия.</div></div>';
     }
 
     p.innerHTML = h;
@@ -1760,6 +1912,10 @@
         else if (a === "devtools") ipc({ cmd: "devtools" });
         else if (a === "userscripts") ipc({ cmd: "userscripts" });
         else if (a === "about") ipc({ cmd: "panel", name: "about" });
+        else if (a === "checkUpdate") ipc({ cmd: "checkUpdate" });
+        else if (a === "openUpdate") ipc({ cmd: "openUpdate" });
+        else if (a === "syncNow") ipc({ cmd: "syncNow" });
+        else if (a === "syncPick") ipc({ cmd: "syncPick" });
         else if (a === "shield") ipc({ cmd: "panel", name: "shield" });
         else if (a === "siteProtect") ipc({ cmd: "siteProtect" });
         else if (a === "checkSite") ipc({ cmd: "checkSite" });
@@ -2021,10 +2177,26 @@
     }
   }
 
+  function renderBookmarksBar(s) {
+    const bb = $("bookmarksbar");
+    if (!bb) return;
+    const items = s.bookmarks || [];
+    const show = s.uiStyle !== "orvyn" && !!s.bookmarksBar && items.length > 0;
+    bb.style.display = show ? "flex" : "none";
+    if (!show) { bb.innerHTML = ""; return; }
+    bb.innerHTML = items.slice(0, 16).map((b) =>
+      '<button class="bm" data-bm="' + esc(b.url) + '" title="' + esc(b.url) + '">' + esc(b.title || b.url) + '</button>'
+    ).join("");
+    bb.querySelectorAll("[data-bm]").forEach((el) => {
+      el.onclick = () => ipc({ cmd: "navigate", text: el.getAttribute("data-bm") });
+    });
+  }
+
   window.render = function (s) {
     st = s;
     renderTabs();
     renderPanel();
+    renderBookmarksBar(s);
     const eb = $("enginebtn");
     if (eb) {
       const e = s.searchEngine || "ddg";
@@ -2036,6 +2208,8 @@
     document.body.classList.toggle("noanim", !s.anim);
     document.body.classList.toggle("haspanel", !!s.panel);
     document.body.classList.toggle("light", s.theme === "light");
+    document.body.classList.toggle("amoled", s.theme === "amoled");
+    document.body.classList.toggle("style-chrome", s.uiStyle !== "orvyn");
     document.body.classList.toggle("maximized", !!s.maximized);
     const b = document.body;
     b.style.setProperty("--accent", s.accent || "#4fd1ff");
@@ -2056,6 +2230,7 @@
     $("back").disabled = !s.canBack;
     $("fwd").disabled = !s.canForward;
     $("star").classList.toggle("on", !!s.bookmarked);
+  if ($("star2")) $("star2").classList.toggle("on", !!s.bookmarked);
     $("blockedn").textContent = s.blocked > 999 ? "999+" : String(s.blocked);
     const sec = s.security || {};
     const sh = $("shield");
@@ -2088,6 +2263,9 @@
   $("reload").onclick = () => ipc({ cmd: "reload" });
   $("home").onclick = () => ipc({ cmd: "home" });
   $("star").onclick = () => ipc({ cmd: "bookmark" });
+  if ($("star2")) $("star2").onclick = () => ipc({ cmd: "bookmark" });
+  if ($("profilebtn")) $("profilebtn").onclick = () => ipc({ cmd: "panel", name: "settings" });
+  if ($("extbtn")) $("extbtn").onclick = () => ipc({ cmd: "panel", name: "extensions" });
   $("downloads").onclick = () => ipc({ cmd: "panel", name: "downloads" });
   $("musicbtn").onclick = () => ipc({ cmd: "panel", name: "music" });
   $("menu").onclick = () => ipc({ cmd: "panel", name: "menu" });
@@ -2151,7 +2329,11 @@
     else if (ctrl && k === "f") { e.preventDefault(); ipc({ cmd: "findInPage" }); }
     else if (ctrl && k === "m") { e.preventDefault(); ipc({ cmd: "muteTab", id: currentId() }); }
     else if (ctrl && e.shiftKey && k === "a") { e.preventDefault(); ipc({ cmd: "panel", name: "tabs" }); }
-    else if (ctrl && e.shiftKey && k === "b") { e.preventDefault(); ipc({ cmd: "toggle", name: "toolbarHidden" }); }
+    else if (ctrl && e.shiftKey && k === "b") { e.preventDefault(); ipc({ cmd: "toggle", name: "bookmarksBar" }); }
+    else if (ctrl && k === "h") { e.preventDefault(); ipc({ cmd: "panel", name: "history" }); }
+    else if (ctrl && k === "j") { e.preventDefault(); ipc({ cmd: "panel", name: "downloads" }); }
+    else if (ctrl && e.shiftKey && k === "o") { e.preventDefault(); ipc({ cmd: "panel", name: "bookmarks" }); }
+    else if (ctrl && e.shiftKey && k === "delete") { e.preventDefault(); ipc({ cmd: "panel", name: "clean" }); }
     else if (ctrl && e.shiftKey && k === "l") { e.preventDefault(); ipc({ cmd: "vaultFillCurrent" }); }
     else if (ctrl && e.shiftKey && k === "i") { e.preventDefault(); ipc({ cmd: "devtools" }); }
     else if (ctrl && k === "tab") { e.preventDefault(); ipc({ cmd: "cycleTab", delta: e.shiftKey ? -1 : 1 }); }

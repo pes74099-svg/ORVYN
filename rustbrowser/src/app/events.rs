@@ -185,6 +185,16 @@ impl App {
                 }
                 self.refresh();
             }
+            UserEvent::Update(res) => {
+                self.update_checking = false;
+                if let Ok(r) = &res {
+                    if update::is_newer(env!("CARGO_PKG_VERSION"), &r.tag) {
+                        self.status = format!("Доступна новая версия {}.", r.tag);
+                    }
+                }
+                self.update_result = Some(res);
+                self.refresh();
+            }
             UserEvent::BadSite { id, url, reason } => {
                 let light = self.store.settings.light();
                 if let Some(t) = self.tabs.iter_mut().find(|t| t.id == id) {

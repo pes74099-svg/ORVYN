@@ -119,6 +119,37 @@ impl App {
                 self.layout();
                 self.refresh();
             }
+            "checkUpdate" => {
+                if !self.update_checking {
+                    self.update_checking = true;
+                    self.update_result = None;
+                    self.status = "Проверяю обновления…".to_string();
+                    let proxy = self.proxy.clone();
+                    std::thread::spawn(move || {
+                        let _ = proxy.send_event(UserEvent::Update(update::check()));
+                    });
+                }
+                self.refresh();
+            }
+            "openUpdate" => {
+                if let Some(Ok(r)) = &self.update_result {
+                    let url = r
+                        .setup_url
+                        .clone()
+                        .unwrap_or_else(|| r.url.clone());
+                    if !url.is_empty() {
+                        self.panel = None;
+                        self.new_tab_full(Some(url), true, false, false, false);
+                    }
+                }
+            }
+            "syncPick" => self.sync_pick(),
+            "syncNow" => self.sync_now(),
+            "moveTab" => {
+                if let (Some(id), Some(index)) = (v["id"].as_u64(), v["index"].as_u64()) {
+                    self.move_tab(id as usize, index as usize);
+                }
+            }
             "cycleTab" => {
                 self.cycle(v["delta"].as_i64().unwrap_or(1));
             }
@@ -224,6 +255,7 @@ impl App {
                     "aiOn" => self.store.settings.ai_on,
                     "aiSave" => self.store.settings.ai_save,
                     "mouseGestures" => self.store.settings.mouse_gestures,
+                    "bookmarksBar" => self.store.settings.bookmarks_bar,
                     _ => return,
                 };
                 self.apply_toggle(&name, !current);

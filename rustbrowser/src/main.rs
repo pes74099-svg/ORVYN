@@ -17,6 +17,8 @@ mod music;
 mod search;
 mod security;
 mod storage;
+mod sync;
+mod update;
 mod vault;
 mod webview_loader;
 

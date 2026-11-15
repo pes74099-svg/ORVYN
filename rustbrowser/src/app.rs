@@ -1,6 +1,6 @@
 use crate::{
     adblock, ai, backup, capture, cleaner, downloads, import, monitor, music, search, security,
-    storage, vault,
+    storage, sync, update, vault,
 };
 use zeroize::Zeroize;
 
@@ -48,6 +48,7 @@ const CHROME_H: f64 = 92.0;
 const TABBAR_H: f64 = 38.0;
 const TOOLBAR_H: f64 = 54.0;
 const TOOLBAR_ROW_H: f64 = 88.0;
+const BOOKMARKS_H: f64 = 32.0;
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 /// Процентное кодирование для адреса страницы в Google Translate.
@@ -292,6 +293,7 @@ enum UserEvent {
     WarpAction(Result<String, String>),
     AiReply(Result<ai::Reply, String>),
     AiPageText(String),
+    Update(Result<update::Release, String>),
     Quit,
 }
 
@@ -419,6 +421,9 @@ struct App {
     ai_busy: bool,
     ai_error: String,
     ai_model: String,
+    /// Проверка обновлений через GitHub Releases.
+    update_checking: bool,
+    update_result: Option<Result<update::Release, String>>,
 }
 
 fn rect(x: f64, y: f64, w: f64, h: f64) -> Rect {
@@ -639,6 +644,13 @@ impl App {
         let inject = adblock::inject_script(store.settings.protection_on, store.settings.mouse_gestures);
         let ai_history = store.ai_history.clone();
 
+        // Тихая проверка обновлений при старте: сеть в отдельном потоке, UI не ждёт.
+        {
+            let p = proxy.clone();
+            std::thread::spawn(move || {
+                let _ = p.send_event(UserEvent::Update(update::check()));
+            });
+        }
         Ok(Self {
             window,
             maximized: false,
@@ -701,6 +713,8 @@ impl App {
             ai_busy: false,
             ai_error: String::new(),
             ai_model: ai::MODEL_LABEL.to_string(),
+            update_checking: false,
+            update_result: None,
         })
     }
 
@@ -728,7 +742,18 @@ impl App {
                 TOOLBAR_H
             };
         }
+        if self.bookmarks_bar_visible() {
+            h += BOOKMARKS_H;
+        }
         h
+    }
+
+    /// Полоса закладок показывается только в Chrome-стиле и при наличии закладок.
+    fn bookmarks_bar_visible(&self) -> bool {
+        self.store.settings.ui_style != "orvyn"
+            && self.store.settings.bookmarks_bar
+            && !self.store.settings.toolbar_hidden
+            && !self.store.bookmarks.is_empty()
     }
 
     fn layout(&self) {
@@ -767,7 +792,11 @@ impl App {
             .replace("{{SNOW}}", if s.snow { "true" } else { "false" })
             .replace("{{GLOW}}", if s.glow { "true" } else { "false" })
             .replace("{{ANIM}}", if s.anim { "true" } else { "false" })
-            .replace("{{THEME}}", if s.light() { "light" } else { "dark" })
+            .replace("{{THEME}}", &s.theme)
+            .replace(
+                "{{STYLE}}",
+                if s.ui_style == "orvyn" { "style-orvyn" } else { "style-chrome" },
+            )
             .replace("{{ACCENT}}", &s.accent)
             .replace("{{ACCENT2}}", &s.accent2)
             .replace("{{FONT}}", font)
@@ -1031,6 +1060,29 @@ impl App {
                 }
             }
         }
+    }
+
+    /// Перемещает вкладку на новую позицию (перетаскивание, как в Chrome).
+    fn move_tab(&mut self, id: usize, index: usize) {
+        let Some(from) = self.tabs.iter().position(|t| t.id == id) else { return };
+        if self.tabs.len() < 2 {
+            return;
+        }
+        let to = index.min(self.tabs.len() - 1);
+        if from == to {
+            return;
+        }
+        let active_id = self.tabs.get(self.active).map(|t| t.id);
+        let tab = self.tabs.remove(from);
+        self.tabs.insert(to, tab);
+        if let Some(aid) = active_id {
+            if let Some(pos) = self.tabs.iter().position(|t| t.id == aid) {
+                self.active = pos;
+            }
+        }
+        self.layout();
+        self.refresh();
+        self.save_session();
     }
 
     fn select(&mut self, idx: usize) {
@@ -2235,9 +2287,20 @@ impl App {
         self.layout();
         self.status = "ORVYN AI думает…".to_string();
         let messages = self.ai_request_messages();
+        let provider = ai::Provider {
+            endpoint: self.store.settings.ai_endpoint.trim().to_string(),
+            key: self.store.settings.ai_key.trim().to_string(),
+            model: self.store.settings.ai_model_custom.trim().to_string(),
+        };
+        if !provider.endpoint.is_empty() && provider.model.is_empty() {
+            self.status = "Для своего провайдера укажи модель в настройках AI.".to_string();
+            self.ai_busy = false;
+            self.refresh();
+            return;
+        }
         let p = self.proxy.clone();
         std::thread::spawn(move || {
-            let res = ai::ask(&messages);
+            let res = ai::ask_with(&provider, &messages);
             let _ = p.send_event(UserEvent::AiReply(res));
         });
         text.clear();
@@ -2303,6 +2366,7 @@ impl App {
     fn theme_profile(&self, name: &str) -> storage::ThemeProfile {
         let s = &self.store.settings;
         storage::ThemeProfile {
+            version: 2,
             name: name.to_string(),
             theme: s.theme.clone(),
             accent: s.accent.clone(),
@@ -2472,6 +2536,7 @@ impl App {
         p.name = "Импорт".to_string();
         let name = format!("Импорт {}", storage::now() % 10000);
         p.name = name;
+        storage::normalize_theme(&mut p);
         self.apply_theme_profile(&p);
         if !self.store.themes.iter().any(|x| x.name == p.name) {
             self.store.themes.push(p.clone());
@@ -2592,6 +2657,62 @@ impl App {
         self.tabs.clear();
         self.active = 0;
         self.closed.clear();
+    }
+
+    /// Синхронизация v1: выбрать общую папку.
+    fn sync_pick(&mut self) {
+        let Some(dir) = rfd::FileDialog::new()
+            .set_title("Папка синхронизации ORVYN")
+            .pick_folder()
+        else {
+            self.status = "Выбор папки отменён.".to_string();
+            self.refresh();
+            return;
+        };
+        self.store.settings.sync_folder = dir.display().to_string();
+        storage::save(&self.store);
+        self.sync_now();
+    }
+
+    /// Синхронизация v1: объединить закладки и историю с файлом в папке.
+    fn sync_now(&mut self) {
+        let dir = self.store.settings.sync_folder.trim().to_string();
+        if dir.is_empty() {
+            self.status = "Сначала выбери папку синхронизации.".to_string();
+            self.refresh();
+            return;
+        }
+        let path = sync::path_in(&dir);
+        let remote = match sync::load(&path) {
+            Ok(Some(f)) => f,
+            Ok(None) => sync::SyncFile {
+                app: "ORVYN".to_string(),
+                version: 1,
+                ..sync::SyncFile::default()
+            },
+            Err(e) => {
+                self.status = format!("Синхронизация не удалась: {e}");
+                self.refresh();
+                return;
+            }
+        };
+        let (bookmarks, history, added_bm, added_hist) =
+            sync::merge(&self.store.bookmarks, &self.store.history, &remote);
+        self.store.bookmarks = bookmarks;
+        self.store.history = history;
+        crate::db::replace_bookmarks(&self.store.bookmarks);
+        crate::db::replace_history(&self.store.history);
+
+        let outgoing = sync::SyncFile::from_store(&self.store);
+        self.status = match sync::save(&path, &outgoing) {
+            Ok(()) => format!(
+                "Синхронизировано: +{added_bm} закладок, +{added_hist} записей истории. Файл: {}",
+                path.display()
+            ),
+            Err(e) => format!("Данные объединены, но файл не записан: {e}"),
+        };
+        storage::save(&self.store);
+        self.refresh();
     }
 
     fn backup_export(&mut self) {
@@ -3287,6 +3408,7 @@ impl App {
             "aiOn" => s.ai_on = v,
             "aiSave" => s.ai_save = v,
             "mouseGestures" => s.mouse_gestures = v,
+            "bookmarksBar" => s.bookmarks_bar = v,
             _ => return,
         }
         if matches!(name, "hw" | "bg") {
@@ -3338,7 +3460,7 @@ impl App {
             self.store.ai_history.clear();
         }
         storage::save(&self.store);
-        if matches!(name, "toolbarHidden" | "addressRow") {
+        if matches!(name, "toolbarHidden" | "addressRow" | "bookmarksBar") {
             self.layout();
         }
         if matches!(name, "snow" | "glow" | "anim") {
@@ -3364,10 +3486,10 @@ impl App {
                 self.status = "Стартовая страница сохранена.".to_string();
             }
             "theme" => {
-                self.store.settings.theme = if v.as_str() == Some("light") {
-                    "light".to_string()
-                } else {
-                    "dark".to_string()
+                self.store.settings.theme = match v.as_str() {
+                    Some("light") => "light".to_string(),
+                    Some("amoled") => "amoled".to_string(),
+                    _ => "dark".to_string(),
                 };
                 self.reload_newtab();
             }
@@ -3417,6 +3539,32 @@ impl App {
                     _ => "segoe",
                 }
                 .to_string();
+            }
+            "aiEndpoint" => {
+                self.store.settings.ai_endpoint = v.as_str().unwrap_or("").trim().to_string();
+            }
+            "aiKey" => {
+                self.store.settings.ai_key = v.as_str().unwrap_or("").trim().to_string();
+            }
+            "aiModelCustom" => {
+                self.store.settings.ai_model_custom =
+                    v.as_str().unwrap_or("").trim().to_string();
+            }
+            "uiStyle" => {
+                self.store.settings.ui_style = if v.as_str() == Some("orvyn") {
+                    "orvyn".to_string()
+                } else {
+                    "chrome".to_string()
+                };
+                self.layout();
+            }
+            "bookmarksBar" => {
+                self.store.settings.bookmarks_bar = v.as_bool().unwrap_or(false);
+                self.layout();
+            }
+            "syncFolder" => {
+                self.store.settings.sync_folder =
+                    v.as_str().unwrap_or("").trim().to_string();
             }
             "uiOpacity" => {
                 let n = v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok())).unwrap_or(100);
