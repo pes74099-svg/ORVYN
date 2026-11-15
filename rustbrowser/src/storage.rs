@@ -136,6 +136,8 @@ pub struct Settings {
     pub mouse_gestures: bool,
     /// Стиль интерфейса: "chrome" (по умолчанию) или "orvyn".
     pub ui_style: String,
+    /// Показывать полосу закладок под панелью (по умолчанию выключено, как в Chrome).
+    pub bookmarks_bar: bool,
 }
 
 impl Default for Settings {
@@ -196,6 +198,7 @@ impl Default for Settings {
             ai_save: true,
             mouse_gestures: true,
             ui_style: "chrome".to_string(),
+            bookmarks_bar: false,
         }
     }
 }
@@ -537,6 +540,7 @@ pub fn reset_section(s: &mut Settings, section: &str) -> bool {
             s.panel_left = d.panel_left;
             s.address_row = d.address_row;
             s.ui_style = d.ui_style;
+            s.bookmarks_bar = d.bookmarks_bar;
         }
         "memory" => {
             s.restore_session = d.restore_session;

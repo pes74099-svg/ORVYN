@@ -1,6 +1,6 @@
 use crate::{
     adblock, ai, backup, capture, cleaner, downloads, import, monitor, music, search, security,
-    storage, vault,
+    storage, update, vault,
 };
 use zeroize::Zeroize;
 
@@ -293,6 +293,7 @@ enum UserEvent {
     WarpAction(Result<String, String>),
     AiReply(Result<ai::Reply, String>),
     AiPageText(String),
+    Update(Result<update::Release, String>),
     Quit,
 }
 
@@ -420,6 +421,9 @@ struct App {
     ai_busy: bool,
     ai_error: String,
     ai_model: String,
+    /// Проверка обновлений через GitHub Releases.
+    update_checking: bool,
+    update_result: Option<Result<update::Release, String>>,
 }
 
 fn rect(x: f64, y: f64, w: f64, h: f64) -> Rect {
@@ -640,6 +644,13 @@ impl App {
         let inject = adblock::inject_script(store.settings.protection_on, store.settings.mouse_gestures);
         let ai_history = store.ai_history.clone();
 
+        // Тихая проверка обновлений при старте: сеть в отдельном потоке, UI не ждёт.
+        {
+            let p = proxy.clone();
+            std::thread::spawn(move || {
+                let _ = p.send_event(UserEvent::Update(update::check()));
+            });
+        }
         Ok(Self {
             window,
             maximized: false,
@@ -702,6 +713,8 @@ impl App {
             ai_busy: false,
             ai_error: String::new(),
             ai_model: ai::MODEL_LABEL.to_string(),
+            update_checking: false,
+            update_result: None,
         })
     }
 
@@ -738,6 +751,7 @@ impl App {
     /// Полоса закладок показывается только в Chrome-стиле и при наличии закладок.
     fn bookmarks_bar_visible(&self) -> bool {
         self.store.settings.ui_style != "orvyn"
+            && self.store.settings.bookmarks_bar
             && !self.store.settings.toolbar_hidden
             && !self.store.bookmarks.is_empty()
     }
@@ -3300,6 +3314,7 @@ impl App {
             "aiOn" => s.ai_on = v,
             "aiSave" => s.ai_save = v,
             "mouseGestures" => s.mouse_gestures = v,
+            "bookmarksBar" => s.bookmarks_bar = v,
             _ => return,
         }
         if matches!(name, "hw" | "bg") {
@@ -3351,7 +3366,7 @@ impl App {
             self.store.ai_history.clear();
         }
         storage::save(&self.store);
-        if matches!(name, "toolbarHidden" | "addressRow") {
+        if matches!(name, "toolbarHidden" | "addressRow" | "bookmarksBar") {
             self.layout();
         }
         if matches!(name, "snow" | "glow" | "anim") {
@@ -3437,6 +3452,10 @@ impl App {
                 } else {
                     "chrome".to_string()
                 };
+                self.layout();
+            }
+            "bookmarksBar" => {
+                self.store.settings.bookmarks_bar = v.as_bool().unwrap_or(false);
                 self.layout();
             }
             "uiOpacity" => {

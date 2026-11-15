@@ -57,15 +57,16 @@ async function evalOn(tab, expression) {
   const list = await (await fetch(`${BASE}/json/list`)).json();
   for (const t of list) {
     if (t.type !== "page") continue;
+    let isUi = false;
     try {
-      if ((await evalOn(t, "!!document.getElementById('panel')")) === true) {
-        const value = await evalOn(t, expression);
-        console.log(typeof value === "string" ? value : JSON.stringify(value));
-        return;
-      }
+      isUi = (await evalOn(t, "!!document.getElementById('panel')")) === true;
     } catch (e) {
       // не интерфейс — идём дальше
     }
+    if (!isUi) continue;
+    const value = await evalOn(t, expression);
+    console.log(typeof value === "string" ? value : JSON.stringify(value));
+    return;
   }
   console.error("интерфейс ORVYN не найден; запусти браузер с ORVYN_CDP_PORT=9222");
   process.exit(1);

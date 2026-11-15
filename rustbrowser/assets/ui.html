@@ -1017,7 +1017,7 @@
       h += '<div class="item" data-a="custom"><span class="ic">' + I.glow + '</span><div class="body"><div class="l1">Оформление</div><div class="l2">цвета, форма, шрифт, обои и профили</div></div></div>';
       h += '<div class="item" data-a="music"><span class="ic">' + I.music + '</span><div class="body"><div class="l1">Музыка</div><div class="l2">бесплатные сервисы и обход региона</div></div></div>';
       h += '<div class="item" data-a="devtools"><span class="ic">' + I.code + '</span><div class="body"><div class="l1">DevTools</div><div class="l2">Ctrl+Shift+I</div></div></div>';
-      h += '<div class="item" data-a="about"><span class="ic">' + I.info + '</span><div class="body"><div class="l1">О браузере</div><div class="l2">ORVYN 2.2</div></div></div>';
+      h += '<div class="item" data-a="about"><span class="ic">' + I.info + '</span><div class="body"><div class="l1">О браузере</div><div class="l2">ORVYN ' + esc(st.appVersion || "3.0") + '</div></div></div>';
     }
 
     if (st.panel === "music") {
@@ -1555,6 +1555,7 @@
            '<option value="orvyn"' + (st.uiStyle === "orvyn" ? " selected" : "") + '>ORVYN</option>' +
            '</select></div>' +
            '<div class="note">Chrome-стиль повторяет привычную раскладку: вкладки сверху, омнибокс-пилюля, круглые кнопки. Тема и акценты работают в обоих стилях.</div></div>';
+      h += '<div class="item" data-t="bookmarksBar"><span class="ic">' + I.star + '</span><div class="body"><div class="l1">Полоса закладок</div><div class="l2">под панелью, как в Chrome (выкл. по умолчанию)</div></div>' + switchRow(st.bookmarksBar) + '</div>';
       h += '<div class="sform"><div class="fline"><select data-set="theme" data-k="theme">' +
            '<option value="dark"' + (st.theme === "dark" ? " selected" : "") + '>Тёмная тема</option>' +
            '<option value="light"' + (st.theme === "light" ? " selected" : "") + '>Светлая тема</option>' +
@@ -1729,7 +1730,7 @@
 
     if (st.panel === "about") {
       h += '<div class="phead"><span class="t">О браузере</span><span class="act" data-a="close">Закрыть</span></div>';
-      h += '<div class="about"><b>ORVYN 2.2</b> — лёгкий браузер на Rust.<br>' +
+      h += '<div class="about"><b>ORVYN ' + esc(st.appVersion || "3.0") + '</b> — лёгкий браузер на Rust.<br>' +
            'Оболочка, вкладки и вся логика — Rust (tao + wry), движок — WebView2 (Chromium).<br>' +
            'Без Electron и лишних фоновых процессов.<br>' +
            'Поиск: DuckDuckGo по умолчанию, Google и своя выдача ORVYN — на выбор.<br>' +
@@ -1742,6 +1743,12 @@
            '<span class="k">Ctrl+L</span> адрес · <span class="k">Ctrl+D</span> закладка · ' +
            '<span class="k">Ctrl+Shift+L</span> пароль · <span class="k">Ctrl+Tab</span> переключение · ' +
            '<span class="k">Ctrl+Shift+I</span> DevTools</div>';
+      h += '<div class="sform"><div class="fline"><span class="note" style="flex:1 1 auto">' +
+           (st.updateChecking ? "Проверяю обновления…" : esc(st.updateText || "Обновления проверяются через GitHub Releases.")) +
+           '</span><button class="pbtn' + (st.updateReady ? " primary" : "") + '" data-a="' +
+           (st.updateReady ? "openUpdate" : "checkUpdate") + '">' +
+           (st.updateReady ? "Скачать" : "Проверить") + '</button></div>' +
+           '<div class="note">Без фоновой установки: ORVYN покажет новую версию и откроет страницу загрузки. Ничего не ставится без твоего согласия.</div></div>';
     }
 
     p.innerHTML = h;
@@ -1864,6 +1871,8 @@
         else if (a === "devtools") ipc({ cmd: "devtools" });
         else if (a === "userscripts") ipc({ cmd: "userscripts" });
         else if (a === "about") ipc({ cmd: "panel", name: "about" });
+        else if (a === "checkUpdate") ipc({ cmd: "checkUpdate" });
+        else if (a === "openUpdate") ipc({ cmd: "openUpdate" });
         else if (a === "shield") ipc({ cmd: "panel", name: "shield" });
         else if (a === "siteProtect") ipc({ cmd: "siteProtect" });
         else if (a === "checkSite") ipc({ cmd: "checkSite" });
@@ -2129,7 +2138,7 @@
     const bb = $("bookmarksbar");
     if (!bb) return;
     const items = s.bookmarks || [];
-    const show = s.uiStyle !== "orvyn" && items.length > 0;
+    const show = s.uiStyle !== "orvyn" && !!s.bookmarksBar && items.length > 0;
     bb.style.display = show ? "flex" : "none";
     if (!show) { bb.innerHTML = ""; return; }
     bb.innerHTML = items.slice(0, 16).map((b) =>

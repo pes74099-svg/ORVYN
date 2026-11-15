@@ -193,6 +193,7 @@ impl App {
             "uiRadius": self.store.settings.ui_radius,
             "uiFont": self.store.settings.ui_font,
             "uiStyle": self.store.settings.ui_style,
+            "bookmarksBar": self.store.settings.bookmarks_bar,
             "uiOpacity": self.store.settings.ui_opacity,
             "uiBlur": self.store.settings.ui_blur,
             "wallpaper": self.store.settings.wallpaper,
@@ -232,6 +233,23 @@ impl App {
             "aiMessages": self.ai_history.clone(),
             "aiContextChars": self.ai_context.as_ref().map(|s| s.chars().count()).unwrap_or(0),
             "startupMs": self.startup_ms,
+            "appVersion": env!("CARGO_PKG_VERSION"),
+            "updateChecking": self.update_checking,
+            "updateText": self.update_result.as_ref().map(|r| match r {
+                Ok(rel) => {
+                    if update::is_newer(env!("CARGO_PKG_VERSION"), &rel.tag) {
+                        format!("Доступна версия {} — {} МБ", rel.tag, rel.size_mb.max(1))
+                    } else {
+                        format!("Версия {} — последняя", rel.tag)
+                    }
+                }
+                Err(e) => format!("Не удалось проверить: {e}"),
+            }),
+            "updateReady": self
+                .update_result
+                .as_ref()
+                .map(|r| matches!(r, Ok(rel) if update::is_newer(env!("CARGO_PKG_VERSION"), &rel.tag)))
+                .unwrap_or(false),
             "themes": self.store.themes,
             "settingsSections": storage::SETTINGS_SECTIONS
                 .iter()
