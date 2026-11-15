@@ -1,8 +1,9 @@
 // Проверка синтаксиса JS из ui.html без запуска браузера.
 const fs = require("fs");
+const path = require("path");
 
-const path = process.argv[2] || "C:\\orbit\\rustbrowser\\assets\\ui.html";
-const html = fs.readFileSync(path, "utf8");
+const target = process.argv[2] || path.resolve(__dirname, "..", "rustbrowser", "assets", "ui.html");
+const html = fs.readFileSync(target, "utf8");
 const blocks = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 if (!blocks.length) {
   console.error("не найден <script>");
