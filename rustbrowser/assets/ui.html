@@ -1625,6 +1625,13 @@
       h += '<div class="item" data-a="about"><span class="ic">' + I.info + '</span><div class="body"><div class="l1">О браузере</div></div></div>';
       h += '</div>';
 
+      h += '<div class="setsec" data-sec="sync">';
+      h += '<div class="sect">Синхронизация</div>';
+      h += '<div class="sform"><div class="fline"><input data-set="syncFolder" data-k="syncFolder" spellcheck="false" placeholder="Папка на диске или в облаке" value="' + esc(st.syncFolder || "") + '"></div>' +
+           '<div class="fline"><button class="pbtn primary" data-a="syncNow">Синхронизировать</button><button class="pbtn" data-a="syncPick">Выбрать папку</button></div>' +
+           '<div class="note">ORVYN кладёт в эту папку файл orvyn-sync.json: закладки и история объединяются без удаления. Настройки и пароли не синхронизируются. Подходит папка OneDrive, Яндекс.Диска или сетевой диск. Версия 1 — по кнопке.</div></div>';
+      h += '</div>';
+
       h += '<div class="setsec" data-sec="extra">';
       h += '<div class="sect">Разработчики</div>';
       h += '<div class="devcard">' +
@@ -1873,6 +1880,8 @@
         else if (a === "about") ipc({ cmd: "panel", name: "about" });
         else if (a === "checkUpdate") ipc({ cmd: "checkUpdate" });
         else if (a === "openUpdate") ipc({ cmd: "openUpdate" });
+        else if (a === "syncNow") ipc({ cmd: "syncNow" });
+        else if (a === "syncPick") ipc({ cmd: "syncPick" });
         else if (a === "shield") ipc({ cmd: "panel", name: "shield" });
         else if (a === "siteProtect") ipc({ cmd: "siteProtect" });
         else if (a === "checkSite") ipc({ cmd: "checkSite" });

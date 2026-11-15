@@ -1,6 +1,6 @@
 use crate::{
     adblock, ai, backup, capture, cleaner, downloads, import, monitor, music, search, security,
-    storage, update, vault,
+    storage, sync, update, vault,
 };
 use zeroize::Zeroize;
 
@@ -793,6 +793,10 @@ impl App {
             .replace("{{GLOW}}", if s.glow { "true" } else { "false" })
             .replace("{{ANIM}}", if s.anim { "true" } else { "false" })
             .replace("{{THEME}}", &s.theme)
+            .replace(
+                "{{STYLE}}",
+                if s.ui_style == "orvyn" { "style-orvyn" } else { "style-chrome" },
+            )
             .replace("{{ACCENT}}", &s.accent)
             .replace("{{ACCENT2}}", &s.accent2)
             .replace("{{FONT}}", font)
@@ -2621,6 +2625,62 @@ impl App {
         self.closed.clear();
     }
 
+    /// Синхронизация v1: выбрать общую папку.
+    fn sync_pick(&mut self) {
+        let Some(dir) = rfd::FileDialog::new()
+            .set_title("Папка синхронизации ORVYN")
+            .pick_folder()
+        else {
+            self.status = "Выбор папки отменён.".to_string();
+            self.refresh();
+            return;
+        };
+        self.store.settings.sync_folder = dir.display().to_string();
+        storage::save(&self.store);
+        self.sync_now();
+    }
+
+    /// Синхронизация v1: объединить закладки и историю с файлом в папке.
+    fn sync_now(&mut self) {
+        let dir = self.store.settings.sync_folder.trim().to_string();
+        if dir.is_empty() {
+            self.status = "Сначала выбери папку синхронизации.".to_string();
+            self.refresh();
+            return;
+        }
+        let path = sync::path_in(&dir);
+        let remote = match sync::load(&path) {
+            Ok(Some(f)) => f,
+            Ok(None) => sync::SyncFile {
+                app: "ORVYN".to_string(),
+                version: 1,
+                ..sync::SyncFile::default()
+            },
+            Err(e) => {
+                self.status = format!("Синхронизация не удалась: {e}");
+                self.refresh();
+                return;
+            }
+        };
+        let (bookmarks, history, added_bm, added_hist) =
+            sync::merge(&self.store.bookmarks, &self.store.history, &remote);
+        self.store.bookmarks = bookmarks;
+        self.store.history = history;
+        crate::db::replace_bookmarks(&self.store.bookmarks);
+        crate::db::replace_history(&self.store.history);
+
+        let outgoing = sync::SyncFile::from_store(&self.store);
+        self.status = match sync::save(&path, &outgoing) {
+            Ok(()) => format!(
+                "Синхронизировано: +{added_bm} закладок, +{added_hist} записей истории. Файл: {}",
+                path.display()
+            ),
+            Err(e) => format!("Данные объединены, но файл не записан: {e}"),
+        };
+        storage::save(&self.store);
+        self.refresh();
+    }
+
     fn backup_export(&mut self) {
         let s = &self.store.settings;
         let mut b = backup::Backup::new();
@@ -3457,6 +3517,10 @@ impl App {
             "bookmarksBar" => {
                 self.store.settings.bookmarks_bar = v.as_bool().unwrap_or(false);
                 self.layout();
+            }
+            "syncFolder" => {
+                self.store.settings.sync_folder =
+                    v.as_str().unwrap_or("").trim().to_string();
             }
             "uiOpacity" => {
                 let n = v.as_u64().or_else(|| v.as_str().and_then(|s| s.parse().ok())).unwrap_or(100);

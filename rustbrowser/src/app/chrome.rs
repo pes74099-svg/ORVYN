@@ -143,6 +143,8 @@ impl App {
                     }
                 }
             }
+            "syncPick" => self.sync_pick(),
+            "syncNow" => self.sync_now(),
             "cycleTab" => {
                 self.cycle(v["delta"].as_i64().unwrap_or(1));
             }

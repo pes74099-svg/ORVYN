@@ -110,6 +110,8 @@
   .t4 { background: linear-gradient(135deg,#c0c6ff,#8b93ff); }
   .t5 { background: linear-gradient(135deg,#ffd166,#ff9f45); }
   .t6 { background: linear-gradient(135deg,#ff8fd6,#a97bff); }
+  .t7 { background: linear-gradient(135deg,#ff6b6b,#ffb35a); }
+  .t8 { background: linear-gradient(135deg,#5be3a5,#3ad0ff); }
 
   .badge { margin-top: clamp(20px, 3.2vh, 30px); display: inline-flex; align-items: center; gap: 8px;
            padding: 6px 13px; border-radius: 999px; background: rgba(91,227,165,.07);
@@ -122,6 +124,64 @@
   .hint b { color: #7b88a3; font-weight: 600; }
   .sign { position: relative; z-index: 1; margin-top: 14px; font-size: 10px; letter-spacing: .3em;
           text-transform: uppercase; color: #2c3850; padding-left: .3em; }
+
+  /* --- Chrome-стиль новой вкладки: без часов и снега, как в браузере Chrome --- */
+  .tile.extra, .cust { display: none; }
+  body.style-chrome {
+    background: #fff; color: #202124;
+    padding: clamp(34px, 8vh, 88px) 24px 46px;
+  }
+  body.style-chrome.dark, body.style-chrome.amoled { background: #202124; color: #e8eaed; }
+  body.style-chrome #fx, body.style-chrome .glow, body.style-chrome .badge,
+  body.style-chrome .hint, body.style-chrome .sign,
+  body.style-chrome .clock, body.style-chrome .date { display: none; }
+  body.style-chrome .orb { width: 64px; height: 64px; margin-bottom: 6px; }
+  body.style-chrome .wordmark { font-size: 26px; font-weight: 700; letter-spacing: .16em;
+                                text-transform: none; color: #202124; margin-bottom: 26px; padding-left: .16em; }
+  body.style-chrome.dark .wordmark, body.style-chrome.amoled .wordmark { color: #e8eaed; }
+  body.style-chrome .search { max-width: 584px; margin-top: 0; }
+  body.style-chrome .search input {
+    height: 46px; border-radius: 24px; padding: 0 52px 0 50px; font-size: 15px;
+    background: #fff; border: 1px solid #dfe1e5; color: #202124; box-shadow: none;
+  }
+  body.style-chrome .search input:hover { box-shadow: 0 1px 6px rgba(32,33,36,.18); border-color: transparent; }
+  body.style-chrome .search input:focus { background: #fff; border-color: transparent;
+                                          box-shadow: 0 1px 6px rgba(32,33,36,.24); }
+  body.style-chrome .search input::placeholder { color: #80868b; }
+  body.style-chrome .search .go { left: 16px; right: auto; top: 13px; width: 22px; height: 22px;
+                                  background: transparent; box-shadow: none; cursor: default; }
+  body.style-chrome .search .go:hover { transform: none; filter: none; }
+  body.style-chrome .search .go svg { width: 18px; height: 18px; stroke: #9aa0a6; stroke-width: 2; }
+  body.style-chrome.dark .search input, body.style-chrome.amoled .search input {
+    background: #303134; border-color: #5f6368; color: #e8eaed;
+  }
+  body.style-chrome.dark .search input:focus, body.style-chrome.amoled .search input:focus {
+    background: #303134; border-color: transparent;
+  }
+  body.style-chrome .tiles { grid-template-columns: repeat(8, 108px); gap: 2px; margin-top: 30px; }
+  body.style-chrome .tile {
+    height: 92px; border: 0; border-radius: 8px; background: transparent;
+    color: #202124; font-size: 12px; gap: 9px; padding: 10px 4px;
+  }
+  body.style-chrome .tile:hover { background: #f1f3f4; border: 0; transform: none; box-shadow: none; color: #202124; }
+  body.style-chrome .tile .logo { width: 48px; height: 48px; border-radius: 50%; font-size: 15px; }
+  body.style-chrome.dark .tile, body.style-chrome.amoled .tile { color: #e8eaed; }
+  body.style-chrome.dark .tile:hover, body.style-chrome.amoled .tile:hover { background: #303134; color: #e8eaed; }
+  body.style-chrome .tile.extra { display: flex; }
+  body.style-chrome .cust {
+    display: inline-flex; align-items: center; gap: 8px; position: fixed; right: 20px; bottom: 18px;
+    height: 40px; padding: 0 16px 0 12px; border-radius: 20px; border: 1px solid #dadce0;
+    background: #fff; color: #3c4043; font: inherit; font-size: 13px; cursor: pointer;
+    box-shadow: 0 1px 3px rgba(60,64,67,.16);
+  }
+  body.style-chrome .cust:hover { background: #f8f9fa; }
+  body.style-chrome .cust svg { width: 18px; height: 18px; fill: none; stroke: #5f6368; stroke-width: 1.6; }
+  body.style-chrome.dark .cust, body.style-chrome.amoled .cust {
+    background: #202124; border-color: #5f6368; color: #e8eaed;
+  }
+  body.style-chrome.dark .cust:hover, body.style-chrome.amoled .cust:hover { background: #303134; }
+  @media (max-width: 980px) { body.style-chrome .tiles { grid-template-columns: repeat(4, 108px); } }
+  @media (max-width: 520px) { body.style-chrome .tiles { grid-template-columns: repeat(3, 96px); } }
 
   body.light {
     background: linear-gradient(180deg, #ffffff, #eef3fa 60%, #e9f0f9);
@@ -152,9 +212,15 @@
     .search { margin-top: 16px; }
     .clock { font-size: 46px; }
   }
+  /* Chrome-стиль в светлой теме: убираем карточки у ярлыков (правила выше идут раньше body.light). */
+  body.light.style-chrome .tile { background: transparent; border: 0; color: #202124; }
+  body.light.style-chrome .tile:hover { background: #f1f3f4; color: #202124; }
+  body.light.style-chrome .search input { box-shadow: none; }
+  body.light.style-chrome .search input:focus { box-shadow: 0 1px 6px rgba(32,33,36,.24); }
+  body.light.style-chrome .search input:hover { box-shadow: 0 1px 6px rgba(32,33,36,.18); }
 </style>
 </head>
-<body class="{{THEME}} {{WALL}}">
+<body class="{{THEME}} {{WALL}} {{STYLE}}">
   <canvas id="fx"></canvas>
   <div class="glow a"></div><div class="glow b"></div><div class="glow c"></div>
 
@@ -190,6 +256,8 @@
       <a class="tile" href="https://store.steampowered.com"><span class="logo t3">ST</span>Steam</a>
       <a class="tile" href="https://ru.wikipedia.org"><span class="logo t5">W</span>Википедия</a>
       <a class="tile music" href="#music" id="musictile"><span class="logo t6">♪</span>Музыка</a>
+      <a class="tile extra" href="https://mail.google.com"><span class="logo t7">M</span>Почта</a>
+      <a class="tile extra" href="https://maps.google.com"><span class="logo t8">K</span>Карты</a>
     </div>
 
     <div class="badge"><span class="dot"></span>Реклама и трекеры отключены</div>
@@ -202,6 +270,10 @@
     <span><b>Ctrl+Tab</b> переключение</span>
   </div>
   <div class="sign">ORVYN</div>
+  <button class="cust" id="cust" type="button">
+    <svg viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>
+    Настроить ORVYN
+  </button>
 
 <script>
 (function () {
@@ -244,6 +316,9 @@
       ipc({ rb: "panel", name: "music" });
     });
   }
+
+  const cust = document.getElementById("cust");
+  if (cust) cust.addEventListener("click", () => ipc({ rb: "panel", name: "settings" }));
 
   function tick() {
     const d = new Date();

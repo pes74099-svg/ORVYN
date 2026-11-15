@@ -138,6 +138,8 @@ pub struct Settings {
     pub ui_style: String,
     /// Показывать полосу закладок под панелью (по умолчанию выключено, как в Chrome).
     pub bookmarks_bar: bool,
+    /// Папка общей синхронизации (пусто — синхронизация выключена).
+    pub sync_folder: String,
 }
 
 impl Default for Settings {
@@ -199,6 +201,7 @@ impl Default for Settings {
             mouse_gestures: true,
             ui_style: "chrome".to_string(),
             bookmarks_bar: false,
+            sync_folder: String::new(),
         }
     }
 }
@@ -509,6 +512,7 @@ pub const SETTINGS_SECTIONS: &[(&str, &str)] = &[
     ("privacy", "Приватность"),
     ("ai", "ORVYN AI"),
     ("sites", "Сайты и система"),
+    ("sync", "Синхронизация"),
     ("extra", "Прочее"),
 ];
 
@@ -541,6 +545,7 @@ pub fn reset_section(s: &mut Settings, section: &str) -> bool {
             s.address_row = d.address_row;
             s.ui_style = d.ui_style;
             s.bookmarks_bar = d.bookmarks_bar;
+            s.sync_folder = d.sync_folder;
         }
         "memory" => {
             s.restore_session = d.restore_session;
@@ -590,6 +595,9 @@ pub fn reset_section(s: &mut Settings, section: &str) -> bool {
             s.translate_lang = d.translate_lang;
         }
         // В «Прочем» только карточка разработчиков и общий сброс — сбрасывать нечего.
+        "sync" => {
+            s.sync_folder = d.sync_folder;
+        }
         "extra" => {}
         _ => return false,
     }

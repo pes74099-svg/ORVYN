@@ -194,6 +194,7 @@ impl App {
             "uiFont": self.store.settings.ui_font,
             "uiStyle": self.store.settings.ui_style,
             "bookmarksBar": self.store.settings.bookmarks_bar,
+            "syncFolder": self.store.settings.sync_folder,
             "uiOpacity": self.store.settings.ui_opacity,
             "uiBlur": self.store.settings.ui_blur,
             "wallpaper": self.store.settings.wallpaper,
