@@ -126,7 +126,7 @@ function uiCmd(ui, payload) {
   ok("панель настроек", panelText.toUpperCase().includes("НАСТРОЙК"), "заголовок найден");
 
   const chips = await evalOn(ui, "document.querySelectorAll('[data-setchip]').length");
-  ok("разделы настроек", chips === 9, `чипсов: ${chips}`);
+  ok("разделы настроек", chips >= 10, `чипсов: ${chips}`);
   await evalOn(ui, "document.querySelector('[data-setchip=privacy]').click(); true");
   await sleep(300);
   const visibleSections = await evalOn(

@@ -66,13 +66,13 @@
   /* ---------- стиль Chrome (по умолчанию) ---------- */
   body.style-chrome.light {
     --bg: #dee1e6; --surface: #ffffff; --surface2: #f1f3f4; --surface3: #e8eaed;
-    --text: #202124; --muted: #5f6368; --accent: #1a73e8; --accent2: #1765cc;
+    --text: #202124; --muted: #5f6368;
     --ok: #188038; --danger: #d93025; --amber: #b06000;
     color-scheme: light;
   }
   body.style-chrome:not(.light) {
     --bg: #202124; --surface: #292a2d; --surface2: #35363a; --surface3: #3c4043;
-    --text: #e8eaed; --muted: #9aa0a6; --accent: #8ab4f8; --accent2: #aecbfa;
+    --text: #e8eaed; --muted: #9aa0a6;
   }
   body.style-chrome #tabbar { height: 44px; padding: 8px 6px 0 8px; background: var(--bg); border-bottom: 0; }
   body.style-chrome .tab { height: 35px; border-radius: 8px 8px 0 0; background: transparent; border: 0;
@@ -103,6 +103,7 @@
   #bookmarksbar .bm:hover { background: var(--surface2); }
   body.style-chrome #bookmarksbar { position: relative; }
   body.style-chrome #enginebtn { display: none; }
+  body.style-chrome #home { display: none; }
   body.style-chrome #enginebtn,
   body.style-chrome #downloads,
   body.style-chrome #musicbtn,
