@@ -94,16 +94,16 @@
   .search .go:hover { transform: scale(1.06); filter: brightness(1.08); }
   .search .go svg { width: 18px; height: 18px; fill: none; stroke: #051018; stroke-width: 2.2; stroke-linecap: round; }
 
-  .tiles { margin-top: clamp(26px, 4.4vh, 44px); display: grid; grid-template-columns: repeat(6, 94px);
+  .tiles { margin-top: clamp(26px, 4.4vh, 44px); display: grid; grid-template-columns: repeat(6, 100px);
            gap: 13px; justify-content: center; }
-  .tile { height: 94px; border-radius: 18px; background: rgba(15,20,29,.82); border: 1px solid #192231;
-          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px;
-          text-decoration: none; color: #b6c2d8; font-size: 11.5px;
+  .tile { height: 100px; border-radius: 18px; background: rgba(15,20,29,.82); border: 1px solid #192231;
+          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+          text-decoration: none; color: #b6c2d8; font-size: 12px;
           transition: transform .16s ease, background .16s, border-color .16s, box-shadow .16s; }
   .tile:hover { transform: translateY(-4px); background: rgba(25,32,45,.96); border-color: #2b3a52;
                 color: #fff; box-shadow: 0 16px 36px rgba(0,0,0,.4); }
-  .tile .logo { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center;
-                font-size: 14px; font-weight: 700; color: #051018; }
+  .tile .logo { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center;
+                font-size: 16px; font-weight: 700; color: #051018; }
   .t1 { background: linear-gradient(135deg,#ff5f5f,#ff9a5a); }
   .t2 { background: linear-gradient(135deg,#4fd1ff,#8b7cff); }
   .t3 { background: linear-gradient(135deg,#5be3a5,#3ad0ff); }
@@ -135,8 +135,8 @@
   body.style-chrome #fx, body.style-chrome .glow, body.style-chrome .badge,
   body.style-chrome .hint, body.style-chrome .sign,
   body.style-chrome .clock, body.style-chrome .date { display: none; }
-  body.style-chrome .orb { width: 64px; height: 64px; margin-bottom: 6px; }
-  body.style-chrome .wordmark { font-size: 26px; font-weight: 700; letter-spacing: .16em;
+  body.style-chrome .orb { width: 74px; height: 74px; margin-bottom: 8px; }
+  body.style-chrome .wordmark { font-size: 30px; font-weight: 700; letter-spacing: .16em;
                                 text-transform: none; color: #202124; margin-bottom: 26px; padding-left: .16em; }
   body.style-chrome.dark .wordmark, body.style-chrome.amoled .wordmark { color: #e8eaed; }
   body.style-chrome .search { max-width: 584px; margin-top: 0; }
@@ -158,13 +158,13 @@
   body.style-chrome.dark .search input:focus, body.style-chrome.amoled .search input:focus {
     background: #303134; border-color: transparent;
   }
-  body.style-chrome .tiles { grid-template-columns: repeat(8, 108px); gap: 2px; margin-top: 30px; }
+  body.style-chrome .tiles { grid-template-columns: repeat(8, 112px); gap: 2px; margin-top: 30px; }
   body.style-chrome .tile {
-    height: 92px; border: 0; border-radius: 8px; background: transparent;
-    color: #202124; font-size: 12px; gap: 9px; padding: 10px 4px;
+    height: 100px; border: 0; border-radius: 8px; background: transparent;
+    color: #202124; font-size: 13px; gap: 10px; padding: 10px 4px;
   }
   body.style-chrome .tile:hover { background: #f1f3f4; border: 0; transform: none; box-shadow: none; color: #202124; }
-  body.style-chrome .tile .logo { width: 48px; height: 48px; border-radius: 50%; font-size: 15px; }
+  body.style-chrome .tile .logo { width: 56px; height: 56px; border-radius: 50%; font-size: 18px; }
   body.style-chrome.dark .tile, body.style-chrome.amoled .tile { color: #e8eaed; }
   body.style-chrome.dark .tile:hover, body.style-chrome.amoled .tile:hover { background: #303134; color: #e8eaed; }
   body.style-chrome .tile.extra { display: flex; }

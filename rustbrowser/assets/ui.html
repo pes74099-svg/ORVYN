@@ -137,8 +137,9 @@
   }
   button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
   .row { display: flex; align-items: center; }
-  svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8;
+  svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7;
         stroke-linecap: round; stroke-linejoin: round; }
+  .btn svg { width: 20px; height: 20px; }
 
   #backdrop { position: fixed; inset: 0; z-index: 0; display: none; overflow: hidden;
     background:
@@ -185,7 +186,7 @@
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     display: grid; place-items: center; font-size: 8.5px; font-weight: 700; color: #051018;
   }
-  .tab .fav svg { width: 12px; height: 12px; stroke-width: 2; }
+  .tab .fav svg { width: 13px; height: 13px; stroke-width: 2; }
   .tab .gdot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto;
                 background: var(--gcolor, #8b7cff); box-shadow: 0 0 0 2px rgba(255,255,255,.06); }
   .tab.grouped::before { content: ""; position: absolute; left: 6px; right: 6px; top: 0; height: 2px;
@@ -218,7 +219,7 @@
           color: var(--muted); flex: 0 0 auto; }
   .wbtn:hover { background: var(--surface2); color: var(--text); }
   .wbtn.close:hover { background: #e81123; color: #fff; }
-  .wbtn svg { width: 11px; height: 11px; stroke-width: 1.4; }
+  .wbtn svg { width: 12px; height: 12px; stroke-width: 1.5; }
   #winmax .rest { display: none; }
   body.maximized #winmax .maxi { display: none; }
   body.maximized #winmax .rest { display: block; }
@@ -254,7 +255,7 @@
   #shield { display: flex; align-items: center; gap: 5px; height: 30px; padding: 0 9px; border-radius: 9px;
             color: var(--ok); font-size: 11.5px; font-weight: 600; }
   #shield:hover { background: var(--surface2); }
-  #shield svg { width: 15px; height: 15px; }
+  #shield svg { width: 17px; height: 17px; }
   #shield .n { min-width: 8px; font-variant-numeric: tabular-nums; }
   #incogBadge { display: none; align-items: center; gap: 6px; height: 26px; padding: 0 10px;
                 border-radius: 999px; font-size: 11px; font-weight: 600; color: #cbb8ff;
@@ -299,7 +300,7 @@
   .item:hover { background: var(--surface2); }
   .item .ic { width: 26px; height: 26px; border-radius: 8px; background: var(--surface3);
               display: grid; place-items: center; color: var(--muted); flex: 0 0 auto; }
-  .item .ic svg { width: 15px; height: 15px; }
+  .item .ic svg { width: 18px; height: 18px; }
   .item .body { flex: 1 1 auto; min-width: 0; }
   .item .l1 { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item .l2 { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
