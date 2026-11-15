@@ -6,8 +6,11 @@ fn main() {
         res.set("FileDescription", "ORVYN Browser");
         res.set("LegalCopyright", "© 2026 ORVYN");
         res.compile().expect("failed to compile Windows icon resource");
-        let out = std::env::var("OUT_DIR").expect("OUT_DIR");
-        let obj = std::path::Path::new(&out).join("resource.o");
-        println!("cargo:rustc-link-arg={}", obj.display());
+        // На MSVC winres сам подключает resource.lib, а .o нужен только GNU-линкеру.
+        if std::env::var("CARGO_CFG_TARGET_ENV").as_deref() != Ok("msvc") {
+            let out = std::env::var("OUT_DIR").expect("OUT_DIR");
+            let obj = std::path::Path::new(&out).join("resource.o");
+            println!("cargo:rustc-link-arg={}", obj.display());
+        }
     }
 }
