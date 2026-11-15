@@ -145,6 +145,11 @@ impl App {
             }
             "syncPick" => self.sync_pick(),
             "syncNow" => self.sync_now(),
+            "moveTab" => {
+                if let (Some(id), Some(index)) = (v["id"].as_u64(), v["index"].as_u64()) {
+                    self.move_tab(id as usize, index as usize);
+                }
+            }
             "cycleTab" => {
                 self.cycle(v["delta"].as_i64().unwrap_or(1));
             }

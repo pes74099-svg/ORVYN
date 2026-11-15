@@ -885,6 +885,26 @@
         else ipc({ cmd: "selectTab", id: t.id });
       };
       el.onauxclick = (e) => { if (e.button === 1) ipc({ cmd: "closeTab", id: t.id }); };
+      el.draggable = true;
+      el.ondragstart = (e) => {
+        try {
+          e.dataTransfer.setData("text/plain", String(t.id));
+          e.dataTransfer.effectAllowed = "move";
+        } catch (err) {}
+      };
+      el.ondragover = (e) => { e.preventDefault(); try { e.dataTransfer.dropEffect = "move"; } catch (err) {} };
+      el.ondrop = (e) => {
+        e.preventDefault();
+        const id = Number(e.dataTransfer.getData("text/plain"));
+        if (!id) return;
+        const tabs = [...list.querySelectorAll(".tab")];
+        let index = tabs.length - 1;
+        for (let i = 0; i < tabs.length; i++) {
+          const r = tabs[i].getBoundingClientRect();
+          if (e.clientX < r.left + r.width / 2) { index = i; break; }
+        }
+        ipc({ cmd: "moveTab", id: id, index: index });
+      };
       el.oncontextmenu = (e) => {
         e.preventDefault();
         const name = prompt("Группа вкладки (пусто — убрать метку)", t.group || "");
@@ -2304,7 +2324,11 @@
     else if (ctrl && k === "f") { e.preventDefault(); ipc({ cmd: "findInPage" }); }
     else if (ctrl && k === "m") { e.preventDefault(); ipc({ cmd: "muteTab", id: currentId() }); }
     else if (ctrl && e.shiftKey && k === "a") { e.preventDefault(); ipc({ cmd: "panel", name: "tabs" }); }
-    else if (ctrl && e.shiftKey && k === "b") { e.preventDefault(); ipc({ cmd: "toggle", name: "toolbarHidden" }); }
+    else if (ctrl && e.shiftKey && k === "b") { e.preventDefault(); ipc({ cmd: "toggle", name: "bookmarksBar" }); }
+    else if (ctrl && k === "h") { e.preventDefault(); ipc({ cmd: "panel", name: "history" }); }
+    else if (ctrl && k === "j") { e.preventDefault(); ipc({ cmd: "panel", name: "downloads" }); }
+    else if (ctrl && e.shiftKey && k === "o") { e.preventDefault(); ipc({ cmd: "panel", name: "bookmarks" }); }
+    else if (ctrl && e.shiftKey && k === "delete") { e.preventDefault(); ipc({ cmd: "panel", name: "clean" }); }
     else if (ctrl && e.shiftKey && k === "l") { e.preventDefault(); ipc({ cmd: "vaultFillCurrent" }); }
     else if (ctrl && e.shiftKey && k === "i") { e.preventDefault(); ipc({ cmd: "devtools" }); }
     else if (ctrl && k === "tab") { e.preventDefault(); ipc({ cmd: "cycleTab", delta: e.shiftKey ? -1 : 1 }); }

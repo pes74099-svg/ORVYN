@@ -1062,6 +1062,29 @@ impl App {
         }
     }
 
+    /// Перемещает вкладку на новую позицию (перетаскивание, как в Chrome).
+    fn move_tab(&mut self, id: usize, index: usize) {
+        let Some(from) = self.tabs.iter().position(|t| t.id == id) else { return };
+        if self.tabs.len() < 2 {
+            return;
+        }
+        let to = index.min(self.tabs.len() - 1);
+        if from == to {
+            return;
+        }
+        let active_id = self.tabs.get(self.active).map(|t| t.id);
+        let tab = self.tabs.remove(from);
+        self.tabs.insert(to, tab);
+        if let Some(aid) = active_id {
+            if let Some(pos) = self.tabs.iter().position(|t| t.id == aid) {
+                self.active = pos;
+            }
+        }
+        self.layout();
+        self.refresh();
+        self.save_session();
+    }
+
     fn select(&mut self, idx: usize) {
         if idx >= self.tabs.len() {
             return;
